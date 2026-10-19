@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ひより ご予約（見本）</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div class="banner">ご提案用の見本です（架空のサロン）。送信はされません。</div>
+  <nav aria-label="見本のページ"><a href="index.html">ご提案</a><a class="on" href="booking.html">予約フォーム見本</a><a href="report.html">レポート見本</a></nav>
+  <div class="eyebrow">フェイシャル＆ボディケア｜横浜市</div>
+  <h1>サロン ひより　ご予約フォーム（24時間受付）</h1>
+  <p class="muted small">各項目の「この項目で次にできること」は、店主様向けの説明です。お客様には表示されません。</p>
+  <button class="toggle" type="button" onclick="document.body.classList.toggle('show-why')">「この項目で次にできること」を表示する</button>
+</header>
+
+<form class="form" onsubmit="event.preventDefault();alert('見本のため送信されません。公開後は、確認メールが自動で届き、ご予約がサロンの予約表とレポートに記録されます。')">
+<fieldset>
+  <legend>1. ご希望のメニュー</legend>
+  <label class="opt"><input type="radio" name="menu" value="9900" checked><span>フェイシャルケア 60分</span><span class="price">9,900円</span></label>
+  <label class="opt"><input type="radio" name="menu" value="14300"><span>ボディケア 90分</span><span class="price">14,300円</span></label>
+  <label class="opt"><input type="radio" name="menu" value="19800"><span>フェイシャル＋ボディ 120分</span><span class="price">19,800円（別々なら24,200円）</span></label>
+  <label class="opt"><input type="radio" name="menu" value="5500"><span>はじめての方の体験 60分</span><span class="price">5,500円</span></label>
+  <p class="why">何を選んだかで「次に案内するもの」が決まります。フェイシャルだけの方には、次回ボディとの組み合わせを。体験の方には、翌日に2回目のご案内。セット率と体験→2回目率がレポートに出ます。</p>
+</fieldset>
+
+<fieldset>
+  <legend>2. ご来店について</legend>
+  <div class="row">
+    <label>当サロンのご利用は<select><option>はじめて</option><option>2回目</option><option>3回目以上</option></select></label>
+    <label>前回のご来店は<select><option>―</option><option>1か月以内</option><option>1〜3か月前</option><option>3か月以上前</option></select></label>
+  </div>
+  <p class="why">新規の方が3回目まで来てくださる割合（業種の目安 約30%）を追う項目です。「3か月以上前」の方は、戻ってきてくださった大事な方なので、別のお礼を送れます。</p>
+  <label>どのくらいの間隔で通いたいですか<select><option>選んでください</option><option>2週間に1回</option><option>月に1回</option><option>2〜3か月に1回</option><option>まだ決めていない</option></select></label>
+  <p class="why">聞くだけで次回予約率が変わる項目です。お客様ごとの「そろそろの時期」を自動で出し、その1か月前にご案内します。</p>
+  <label>気になっていること（いくつでも）</label>
+  <div class="row">
+    <label class="opt"><input type="checkbox"><span>乾燥</span><span></span></label>
+    <label class="opt"><input type="checkbox"><span>毛穴</span><span></span></label>
+    <label class="opt"><input type="checkbox"><span>むくみ</span><span></span></label>
+    <label class="opt"><input type="checkbox"><span>肩・背中のこり</span><span></span></label>
+    <label class="opt"><input type="checkbox"><span>自宅でのケアの仕方</span><span></span></label>
+  </div>
+  <p class="why">追加メニューとホームケア用品の「ご案内先」を決める項目です。効果の約束には使いません。相談の多い順にレポートに出ます。</p>
+  <label>当サロンを何で知りましたか<select><option>選んでください</option><option>予約サイト</option><option>Googleマップ・検索</option><option>Instagram</option><option>ご紹介</option><option>チラシ</option><option>通りがかり</option></select></label>
+  <p class="why">次の広告・チラシ・SNS の置き場所を決める項目です。入口ごとの「2回目来店率」まで出すので、「集まるけれど続かない入口」が分かります。</p>
+  <label>ご紹介者のお名前・紹介コード（あれば）<input type="text" placeholder="任意"></label>
+  <p class="why">紹介がどれだけ予約になったかを数えます。ご紹介くださった方へのお礼を自動で送れます。</p>
+</fieldset>
+
+<fieldset>
+  <legend>3. ご希望の日時（3つまで）</legend>
+  <div class="row">
+    <label>第1希望<input type="date"></label>
+    <label>時間帯<select><option>10〜13時</option><option>13〜16時</option><option>16〜19時</option></select></label>
+  </div>
+  <div class="row">
+    <label>第2希望<input type="date"></label>
+    <label>時間帯<select><option>10〜13時</option><option>13〜16時</option><option>16〜19時</option></select></label>
+  </div>
+  <div class="row">
+    <label>第3希望<input type="date"></label>
+    <label>時間帯<select><option>10〜13時</option><option>13〜16時</option><option>16〜19時</option></select></label>
+  </div>
+  <p class="why">希望が集中する曜日・時間帯が分かると、空いている枠に寄せるご案内（平日午後の特典など）が打てます。申込日から希望日までの日数（業種の目安 中央値10日）で、空き枠のお知らせを何日前に送るかが決まります。</p>
+  <label>ご希望の担当者<select><option>どなたでも</option><option>前回と同じ担当者</option></select></label>
+  <p class="why">指名率と、担当者ごとの再来率が出ます。</p>
+</fieldset>
+
+<fieldset>
+  <legend>4. ご連絡先とご連絡の方法</legend>
+  <div class="row">
+    <label>お名前<input type="text" autocomplete="name"></label>
+    <label>電話番号<input type="tel" autocomplete="tel"></label>
+  </div>
+  <label>メールアドレス<input type="email" autocomplete="email"></label>
+  <label>ご予約の確認とリマインドは<select><option>LINE</option><option>メール</option><option>SMS</option></select></label>
+  <p class="why">3日前と前日のリマインドを、お客様が見る手段で送ります。自動のリマインドで無断キャンセルが相対29%減（29研究のまとめ）という数字があります。</p>
+  <label class="opt"><input type="checkbox"><span>季節のお手入れのお便りを受け取る（3日に1回・売り込みなし・いつでも停止できます）</span><span></span></label>
+  <p class="why">同意をいただいた方だけが「お客様リスト」になります。次のキャンペーンやホームケアのご案内を送れるのはこの方たちです。</p>
+</fieldset>
+
+<div class="total"><span>概算（税込）</span><span class="v" id="total">¥9,900</span></div>
+<button class="btn" type="submit">この内容で予約を申し込む</button>
+<p class="muted small">見本のため送信はされません。公開後は、確認メールが自動で届き、内容がサロンの予約表とレポートに記録されます。</p>
+</form>
+
+<footer>サロン ひより（架空のサロン）。このページは ありがとうグループ（エイムポイント合同会社）がご提案用に作成した見本です。</footer>
+</div>
+<script>
+document.querySelectorAll('input[name=menu]').forEach(r=>r.addEventListener('change',()=>{document.getElementById('total').textContent='¥'+Number(r.value).toLocaleString('ja-JP')}));
+</script>
+</body>
+</html>

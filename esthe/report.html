@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ひより来店レポート（見本）</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div class="banner">見本です。サロンも数字もすべて架空で、実在のサロンの結果ではありません。</div>
+  <nav aria-label="見本のページ"><a href="index.html">ご提案</a><a href="booking.html">予約フォーム見本</a><a class="on" href="report.html">レポート見本</a></nav>
+  <div class="eyebrow">サロン ひより（架空）｜フェイシャル＆ボディケア</div>
+  <h1>ひより来店レポート</h1>
+  <div class="meta"><span>集計：2026年11月1日〜30日の予約と会計</span><span>予約フォームと会計の内容から毎朝6時に自動で計算し直します</span></div>
+  <nav aria-label="目次"><a href="#kpi">要約</a><a href="#issues">改善ポイント</a><a href="#charts">グラフ</a><a href="#mails">メール・LINE</a><a href="#how">仕組み</a></nav>
+</header>
+
+<section id="kpi"><div class="kpis" id="kpis"></div></section>
+
+<section id="issues">
+  <div><h2>改善ポイント</h2><p class="muted small">効き目の大きい順です。金額は「こうなったら」の試算で、約束ではありません。「業種の目安」は出典つきの公開データで、事実と推測を分けて書いています。施術の効果については一切書きません。</p></div>
+  <div class="issues" id="issueList"></div>
+</section>
+
+<section id="charts">
+  <div><h2>グラフ</h2><p class="muted small">棒にカーソルを合わせると数値が出ます。濃い色は注目してほしい部分です。</p></div>
+  <div class="grid">
+    <div class="card"><h3>新規のお客様のその後（10月新規 34人）</h3><div class="chart" id="c-funnel"></div><p class="note">体験から2回目に進んだのは3人に1人。業種の目安（3回目まで来るのは約30%）とほぼ同じですが、ここが一番の伸びしろです。</p></div>
+    <div class="card"><h3>来店の間隔（常連のお客様・横は日数）</h3><div class="chart" id="c-gap"></div><p class="note">月1回前後の方が中心。61日を超えた方が23人います。</p></div>
+    <div class="card"><h3>第1希望の曜日（件）</h3><div class="chart" id="c-wd"></div><p class="note">土曜に34%。火・水の午後は空いています。</p></div>
+    <div class="card"><h3>第1希望の時間帯</h3><div class="chart" id="c-slot"></div><p class="note">10〜13時と16〜19時の2つの山。13〜16時は2割です。</p></div>
+    <div class="card"><h3>何で知ったか（新規）</h3><div class="chart" id="c-src"></div><p class="note">予約サイトが半分。紹介は2割ですが、紹介で来た方の2回目率は58%と一番高い。</p></div>
+    <div class="card"><h3>キャンセルの理由（31件）</h3><div class="chart" id="c-cancel"></div><p class="note">「予定が変わった」が6割。3日前のリマインドで振り替えに変えられる種類です。</p></div>
+  </div>
+</section>
+
+<section id="mails">
+  <div><h2>そのまま送れるメール・LINE</h2><p class="muted small">｛ ｝は予約ごとに自動で差し込みます。①〜④はご予約・ご来店のお客様へ、⑤はお便りに同意した方だけに送ります。最初の2週間はオーナー様が承認してから送信します。</p></div>
+  <div class="tabs" role="tablist" id="mailTabs"></div>
+  <div class="mail" role="tabpanel"><div class="when" id="mWhen"></div><div class="subj" id="mSubj"></div><pre id="mBody"></pre></div>
+</section>
+
+<section id="how">
+  <div><h2>この仕組みの中身（5つの画面）</h2></div>
+  <div class="mods">
+    <div class="mod"><h3>予約受付</h3><p>次の打ち手から逆算した項目で受け付け、確認とリマインドまで自動。</p></div>
+    <div class="mod"><h3>レポート</h3><p>このページ。毎朝6時に計算し直し、改善ポイントを効き目の順に出す。</p></div>
+    <div class="mod"><h3>次回予約</h3><p>来店の翌日に「次回予約はこちら」。お客様ごとの「そろそろの時期」を自動で出す。</p></div>
+    <div class="mod"><h3>お客様リスト</h3><p>同意した方だけ。来店の間隔・メニュー・気になることで絞り込む。</p></div>
+    <div class="mod"><h3>お便りの自動配信</h3><p>3日に1回の売らないお便り、周期のお知らせ、休眠の声かけ、年2〜4回のキャンペーン。</p></div>
+  </div>
+  <div class="tbl"><table><thead><tr><th>見る指標</th><th>今の値（架空）</th><th>業種の目安（出典）</th><th>どう使うか</th></tr></thead><tbody id="metrics"></tbody></table></div>
+</section>
+
+<footer>この見本は、ありがとうグループ（エイムポイント合同会社）がご提案のために作成したものです。サロン名・数字はすべて架空です。業種の目安の出典：リクルート 美容センサス 2025上期／2023、リザービア 予約データ 2026年1〜6月、日本政策金融公庫 生活衛生だより 2013、ファンくる 2023、Phorest 2025、Zenoti 2026、Hasvold & Wootton 2011、LINEヤフー資料 2021。</footer>
+</div>
+<div id="tip" hidden></div>
+<script>
+const yen=n=>"¥"+Math.round(n).toLocaleString("ja-JP");
+const VISITS=186, CUST=97, NEW=31, REV=1876600, REBOOK=0.44, CANCEL=31, NOSHOW=3, CONSENT=71, DORMANT=23, GOODS=0.04;
+document.getElementById("kpis").innerHTML=`
+ <div class="kpi lead"><span class="lab">来店</span><span class="val">${VISITS}<small>件</small></span><span class="sub">${CUST}人（うち新規 ${NEW}人）</span></div>
+ <div class="kpi lead"><span class="lab">売上（税込）</span><span class="val">${yen(REV)}</span><span class="sub">1件あたり ${yen(REV/VISITS)}</span></div>
+ <div class="kpi"><span class="lab">体験→2回目</span><span class="val">32<small>%</small></span><span class="sub">10月の新規34人のうち11人</span></div>
+ <div class="kpi"><span class="lab">次回予約率</span><span class="val">44<small>%</small></span><span class="sub">会計時に次回を取った割合</span></div>
+ <div class="kpi"><span class="lab">キャンセル</span><span class="val">${CANCEL}<small>件</small></span><span class="sub">予約の17%。無断は${NOSHOW}件</span></div>
+ <div class="kpi"><span class="lab">お便りの同意</span><span class="val">${CONSENT}<small>人</small></span><span class="sub">お客様の73%＝次の案内を送れる人</span></div>`;
+
+const ISSUES=[
+ ["crit","要対応","61日以上来ていない常連が23人","月1回前後で通っていた方のうち23人が2か月以上空いています。うち17人はお便りに同意しています。","<b>「そろそろの時期です」のご案内を17人に自動で送る</b>（メール③）。残る6人はオーナー様から1通。","試算：23人の3割が戻ると +¥69,000/月","業種の目安：フェイシャルは3か月に1回以上の方が68%（美容センサス 2023・事実）。3か月空いた方は離脱圏に入ります。"],
+ ["crit","要対応","体験の方の3人に2人が2回目に来ていない","10月の体験34人のうち、2回目に来たのは11人（32%）。体験当日に次回予約を取ったのは9人だけです。","<b>体験の翌日にお礼と「次回の目安」を自動で送り、会計時に次回予約を一言そえる</b>（メール①）。","試算：2回目率が32%→45%になると、月4〜5人の常連候補が増える","業種の目安：新規100人で3回目まで来るのは30人、3回来れば90%が続く（日本政策金融公庫 2013・事実）。英愛の新規定着も29%（Phorest 2025・事実）。"],
+ ["warn","伸びしろ","キャンセル31件のうち「予定が変わった」が19件","キャンセル率17%。前日より前に連絡をくれた方が多く、振り替えに変えられる種類です。","<b>3日前と前日の2回、LINEでリマインド。「振り替えはこちら」のリンクを入れる</b>（メール②）。","試算：キャンセルの3割が振り替えになると +¥95,000/月","業種の目安：エステのキャンセル率19%（リザービア 2026・事実）。自動リマインドで無断キャンセルが相対29%減（29研究のまとめ 2011・事実）。"],
+ ["warn","伸びしろ","ホームケア用品は売上の4%","「自宅でのケアの仕方」を選んだ方が38人いますが、ご案内していません。","<b>施術後に、使った商品を1つだけご案内</b>（メール④）。売り込みではなく「今日使ったもの」。","試算：38人の2割が1品（¥4,400）買うと +¥33,000/月","業種の目安：店販を買っていない客の70%が「買いたい」（Phorest 2025・事実）。英の平均物販比率4%（業界ブログ・弱い）。"],
+ ["warn","伸びしろ","土曜に第1希望の34%が集中","火・水の13〜16時はほぼ空いています。土曜は断っている予約が月に6件ありました。","<b>確定メールで第2・第3希望の平日を先に提案。平日午後にホームケアの小さな特典</b>。","試算：断った6件が平日に入ると +¥60,000/月","業種の目安：理容の予約は金曜20.5%・月曜8.2%（Mangomint 2026・事実、米）。日本のエステの曜日データは公開なし。"],
+ ["ok","確認","紹介で来た方の2回目率が58%と一番高い","新規31人のうち紹介は6人。人数は少ないが、続く方が多い入口です。","<b>来店2日後のお礼で紹介コードをご案内</b>（メール①の2通目）。紹介くださった方にもお礼を自動で。","","業種の目安：新しいサロン探しで61%が人づての口コミに頼る（Phorest 2025・事実）。"],
+];
+document.getElementById("issueList").innerHTML=ISSUES.map(i=>`<div class="issue"><span class="chip ${i[0]}">${i[1]}</span><div class="body"><h3>${i[2]}</h3><div class="fact">${i[3]}</div><div class="act">${i[4]}</div>${i[5]?`<div class="est">${i[5]}</div>`:""}<div class="bench">${i[6]}</div></div></div>`).join("");
+
+const tip=document.getElementById("tip");
+const NS="http://www.w3.org/2000/svg";
+const el=(t,a,x)=>{const n=document.createElementNS(NS,t);for(const k in a)n.setAttribute(k,a[k]);if(x!=null)n.textContent=x;return n};
+const nice=m=>{const p=Math.pow(10,Math.floor(Math.log10(m)));return [1,2,2.5,5,10].find(s=>s*p>=m)*p};
+const R=new Map();
+const showTip=(e,t)=>{tip.textContent=t;tip.hidden=false;tip.style.left=Math.min(e.clientX+12,innerWidth-tip.offsetWidth-8)+"px";tip.style.top=(e.clientY-34)+"px"};
+function vbars(id,data,o={}){R.set(id,[vbars,data,o]);const box=document.getElementById(id);box.innerHTML="";const {hi=[],unit="件",fmt=v=>v+unit}=o;
+ const W=Math.max(280,box.clientWidth),H=190,L=36,Rr=8,T=16,B=26,iw=W-L-Rr,ih=H-T-B,max=nice(Math.max(...data.map(d=>d[1])));
+ const s=el("svg",{viewBox:`0 0 ${W} ${H}`,width:W,height:H,role:"img"});
+ for(let i=0;i<=4;i++){const y=T+ih-ih*i/4;s.append(el("line",{x1:L,x2:W-Rr,y1:y,y2:y,class:"grid-l"}));s.append(el("text",{x:L-6,y:y+4,"text-anchor":"end"},Math.round(max*i/4)))}
+ const bw=iw/data.length,g=Math.max(2,bw*.2);
+ data.forEach((d,i)=>{const hh=ih*d[1]/max,x=L+i*bw+g/2,y=T+ih-hh;const r=el("rect",{x,y,width:bw-g,height:hh,rx:4,class:"bar"+(hi.includes(d[0])?" hi":"")});
+  r.addEventListener("mousemove",e=>showTip(e,`${d[0]}：${fmt(d[1])}`));r.addEventListener("mouseleave",()=>tip.hidden=true);
+  s.append(r);s.append(el("text",{x:x+(bw-g)/2,y:H-8,"text-anchor":"middle",class:"lbl"},d[0]));if(hi.includes(d[0]))s.append(el("text",{x:x+(bw-g)/2,y:y-4,"text-anchor":"middle"},fmt(d[1])))});
+ box.append(s)}
+function hbars(id,data,o={}){R.set(id,[hbars,data,o]);const box=document.getElementById(id);box.innerHTML="";const {hi=[],fmt=v=>v+"件",lw=120}=o;
+ const row=28,W=Math.max(280,box.clientWidth),L=lw,Rr=70,T=4,H=T+row*data.length+4,iw=W-L-Rr,max=Math.max(...data.map(d=>d[1]));
+ const s=el("svg",{viewBox:`0 0 ${W} ${H}`,width:W,height:H,role:"img"});
+ data.forEach((d,i)=>{const y=T+i*row,w=Math.max(iw*d[1]/max,1);s.append(el("text",{x:L-8,y:y+row/2+4,"text-anchor":"end",class:"lbl"},d[0]));
+  const r=el("rect",{x:L,y:y+5,width:w,height:row-10,rx:4,class:"bar"+(hi.includes(d[0])?" hi":"")});
+  r.addEventListener("mousemove",e=>showTip(e,`${d[0]}：${fmt(d[1],d)}`));r.addEventListener("mouseleave",()=>tip.hidden=true);
+  s.append(r);s.append(el("text",{x:L+w+6,y:y+row/2+4},fmt(d[1],d)))});
+ box.append(s)}
+hbars("c-funnel",[["体験に来た",34],["2回目に来た",11],["3回目に来た",6],["次回予約あり",4]],{hi:["2回目に来た"],fmt:v=>v+"人",lw:110});
+vbars("c-gap",[["〜14",6],["15-30",31],["31-45",18],["46-60",8],["61-90",14],["91〜",9]],{hi:["61-90","91〜"],unit:"人"});
+vbars("c-wd",[["月",14],["火",9],["水",8],["木",17],["金",26],["土",63],["日",49]],{hi:["土"]});
+hbars("c-slot",[["10〜13時",78],["13〜16時",37],["16〜19時",71]],{hi:["13〜16時"],lw:90});
+hbars("c-src",[["予約サイト",15],["ご紹介",6],["Instagram",5],["Google",4],["チラシ",1]],{hi:["ご紹介"],fmt:(v,d)=>v+"人",lw:100});
+hbars("c-cancel",[["予定が変わった",19],["体調",7],["連絡なし（無断）",3],["その他",2]],{hi:["予定が変わった"],lw:130});
+let rt;addEventListener("resize",()=>{clearTimeout(rt);rt=setTimeout(()=>R.forEach(([f,d,o],id)=>f(id,d,o)),150)});
+
+const SIG=`\n\nサロン ひより（架空のサロン）\n〒000-0000 横浜市○○区○○1-2-3　電話 000-0000-0000\nお便りの停止はこちら：{配信停止URL}`;
+const MAILS=[
+ ["① 体験の翌日：お礼と次回の目安","体験の翌日 朝9時・体験で来た方へ","{お名前}さま、昨日はありがとうございました",
+`{お名前} さま
+
+昨日はサロン ひよりにお越しいただき、ありがとうございました。
+その後、お肌の調子はいかがでしょうか。
+
+昨日お話しした「次に来ていただくならこの頃」の目安をお送りします。
+
+　次回の目安：{次回目安日}ごろ（{間隔}）
+　ご予約はこちら：{予約URL}
+
+ご質問や、気になることがあれば、このLINEにそのままご返信ください。
+無理に続けていただく必要はありません。ご都合のよいときに、お待ちしています。`+SIG],
+ ["② 3日前・前日のリマインド","予約の3日前 朝10時と前日 夜19時・ご予約の方へ","【ひより】{予約日} {時間帯}のご予約について",
+`{お名前} さま
+
+{予約日}（{曜日}）{時間帯}に、{メニュー}でご予約をいただいています。
+担当：{担当者}
+
+ご予定が変わった場合は、下のリンクから別の日時に振り替えができます。
+　振り替え・キャンセル：{変更URL}
+
+前日までにご連絡いただければ、キャンセル料はかかりません。
+当日はお気をつけてお越しください。`+SIG],
+ ["③ そろそろの時期です","前回来店から いつもの間隔の1か月前・同意した方へ","{お名前}さま、そろそろの時期になりました",
+`{お名前} さま
+
+前回のご来店（{前回来店日}）から、{経過日数}日がたちました。
+いつも{間隔}でお越しいただいているので、そろそろの時期かと思い、ご連絡しました。
+
+　空いている日：{空き枠の例}
+　ご予約はこちら：{予約URL}
+
+今回は売り込みではありません。ご都合がつかなければ、そのままで大丈夫です。
+またお会いできるのを楽しみにしています。`+SIG],
+ ["④ 今日使ったものを1つだけ","来店の当日 夜20時・「自宅でのケア」を選んだ方へ","今日のお手入れで使ったものを1つだけご紹介します",
+`{お名前} さま
+
+本日はありがとうございました。
+
+「自宅でのケアの仕方」をご相談いただいたので、今日の施術で使ったものを1つだけご紹介します。
+
+　{商品名}（{価格}）
+　使い方：{使い方1行}
+
+必要なときに、サロンで直接お渡しします。ここから買う必要はありません。
+使い方で分からないことがあれば、このLINEにご返信ください。`+SIG],
+ ["⑤ 売らないお便り（3日に1回）","3日に1回・同意した方へ。売らない","乾燥の季節に、洗顔で気をつけたいこと",
+`{お名前} さま、こんにちは。サロン ひよりです。
+
+11月に入って、お客様から「乾燥が気になる」とよく聞くようになりました。
+今日は洗顔のときに気をつけたいことを1つだけ。
+
+洗顔料をしっかり泡立てて、手ではなく泡で洗うこと。すすぎはぬるま湯で、タオルは押さえるだけ。
+これだけで、洗ったあとのつっぱりが違ってきます。
+
+今日は売るものはありません。また3日後にお便りします。`+SIG],
+];
+const tabs=document.getElementById("mailTabs");
+function show(i){[...tabs.children].forEach((b,j)=>b.setAttribute("aria-selected",j===i));const m=MAILS[i];document.getElementById("mWhen").textContent="送るタイミング："+m[1];document.getElementById("mSubj").textContent="件名："+m[2];document.getElementById("mBody").textContent=m[3]}
+MAILS.forEach((m,i)=>{const b=document.createElement("button");b.type="button";b.setAttribute("role","tab");b.textContent=m[0];b.onclick=()=>show(i);tabs.append(b)});show(0);
+
+document.getElementById("metrics").innerHTML=[
+ ["1件あたり金額",yen(REV/VISITS),"エステ 1回 6,622円（美容センサス 2025上期・事実）","メニューの組み合わせの効果を測る基準"],
+ ["体験→2回目率","32%","新規が3回目まで来るのは30%（日本政策金融公庫 2013・事実）","翌日のお礼と次回予約の効果測定"],
+ ["次回予約率","44%","次回予約を取る人 47%（ファンくる 2023・事実）。上手な店は80%（1社事例）","会計時の一言の効果測定"],
+ ["来店の間隔（中央値）","34日","エステ 年4.14回≒88日（美容センサスから計算・推測）。フェイシャル月1回以上38%（事実）","「そろそろの時期」の案内日の初期値"],
+ ["キャンセル率","17%","エステ 19%（リザービア 2026・事実）","リマインドの効果測定"],
+ ["申込から来店までの日数（中央値）","9日","エステ 10日（リザービア 2026・事実）","空き枠のお知らせを何日前に送るか"],
+ ["ホームケア用品の比率","4%","英の平均4%（業界ブログ・弱い）。買っていない客の70%が「買いたい」（Phorest 2025・事実）","1品だけのご案内の効果測定"],
+ ["お便りの同意","71人（73%）","LINEは59%が見る、メルマガ43%（LINEヤフー資料 2021・事実）","送れる相手の数。開封率を毎月見る"],
+].map(r=>`<tr><td>${r[0]}</td><td class="num">${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td></tr>`).join("");
+</script>
+</body>
+</html>
