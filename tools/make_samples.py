@@ -354,6 +354,7 @@ def main():
     ap.add_argument("--per-day", type=int, default=30)
     ap.add_argument("--letters", help="手紙の差し込みCSVを置くフォルダ（送る日ごとに1ファイル）")
     ap.add_argument("--letters-per-day", type=int, default=15)
+    ap.add_argument("--letters-only", action="store_true", help="メールは使わず、全部の店を手紙で送る（2026-10-20 三浦さん「ひとまず手紙作戦オンリー」）")
     ap.add_argument("--start", default=str(datetime.date.today()))
     ap.add_argument("--remove", help="消す店の番号（カンマ区切り）")
     a = ap.parse_args()
@@ -382,6 +383,7 @@ def main():
                "営業お断り" if row.get("営業お断り（なし・あり）", "").strip() == "あり" else
                "チェーン" if row.get("チェーンか（いいえ・はい）", "").strip() == "はい" else
                "きらりん・エアタクミ" if any(x in name for x in EXCLUDE_NAMES) else
+               "郵送用の住所がない（手紙だけで送る）" if a.letters_only and not split_address(row.get(ADDR_COL, "")) else
                "アドレスも郵送用の住所もない" if "@" not in row.get("店が公表しているメールアドレス", "") and not split_address(row.get(ADDR_COL, "")) else
                "以前に消した店" if by_no.get(no, {}).get("状態") == "消した" else "")
         if not no or not name or why:
@@ -405,7 +407,7 @@ def main():
 
     start = datetime.date.fromisoformat(a.start)
     rows = {r.get("番号", "").strip(): r for r in load(a.candidates)}
-    mails = [m for m in made if "@" in rows[m["番号"]].get("店が公表しているメールアドレス", "")]
+    mails = [] if a.letters_only else [m for m in made if "@" in rows[m["番号"]].get("店が公表しているメールアドレス", "")]
     letters = [m for m in made if m not in mails]
     for m in made:
         m["送り方"] = "メール" if m in mails else "手紙"
