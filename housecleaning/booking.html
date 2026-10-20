@@ -113,12 +113,6 @@ function calc(){let s=nums.reduce((a,i)=>a+(+i.value||0)*(+i.dataset.p),0);
 nums.forEach(i=>i.addEventListener('input',calc));set.addEventListener('change',()=>{if(set.checked){nums[1].value=1;nums[3].value=1;nums[4].value=1}calc()});
 document.getElementById('whyToggle').addEventListener('change',e=>document.body.classList.toggle('nowhy',!e.target.checked));
 calc();
-(function(){const shop=new URLSearchParams(location.search).get('shop');if(!shop)return;
-const w=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);let n;
-while(n=w.nextNode()){n.nodeValue=n.nodeValue.split('おそうじ工房 そらいろ').join(shop).split('（架空の店）').join('')}
-document.title=shop+'｜ご予約（見本）';
-document.querySelector('.sample-bar').textContent=shop+'様へのご提案用の見本です。料金・メニューは仮で、送信はされません。';
-})();
 </script>
 </body>
 </html>

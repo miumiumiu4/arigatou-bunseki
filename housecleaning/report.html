@@ -231,15 +231,6 @@ const M=[
 const tabs=document.getElementById('tabs');
 function show(i){[...tabs.children].forEach((b,j)=>b.setAttribute('aria-selected',j===i));document.getElementById('when').textContent='送るタイミング：'+M[i][1];document.getElementById('subj').textContent='件名：'+M[i][2];document.getElementById('body').textContent=M[i][3]}
 M.forEach((m,i)=>{const b=document.createElement('button');b.type='button';b.textContent=m[0];b.onclick=()=>show(i);tabs.append(b)});show(0);
-(function(){const q=new URLSearchParams(location.search);const shop=q.get('shop');if(!shop)return;
-document.body.classList.add('sales');
-const w=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);let n;const reps=[['おそうじ工房 そらいろ（架空）',shop],['おそうじ工房 そらいろ',shop],['そらいろ',shop],['店名・数字はすべて架空です。','数字はすべて架空です。']];
-while(n=w.nextNode()){let t=n.nodeValue;reps.forEach(([a,b])=>{t=t.split(a).join(b)});n.nodeValue=t}
-document.title=shop+' 予約レポート（見本）';
-M.forEach(m=>{m[2]=m[2].split('そらいろ').join(shop);m[3]=m[3].split('おそうじ工房 そらいろ').join(shop).split('そらいろ').join(shop)});
-[...tabs.children].forEach((b,i)=>{if(i!==1&&i!==4)b.style.display='none'});show(1);
-document.querySelector('.sample-bar').textContent=shop+'様へのご提案用の見本です。数字はすべて架空で、'+shop+'様の実際の数字ではありません。';
-})();
 
 </script>
 </body>

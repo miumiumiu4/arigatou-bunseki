@@ -1,0 +1,369 @@
+#!/usr/bin/env python3
+"""店ごとの見本（予約フォーム・レポート）と1通目の下書きを、候補シートから一括で作る。
+
+使い方：
+  python3 tools/make_samples.py --candidates 候補.csv [--prices 価格.csv]
+      --manifest 一覧.csv --drafts 下書き.csv [--senders a@x,b@x,...] [--per-day 30]
+  python3 tools/make_samples.py --manifest 一覧.csv --remove 12   # 「不要」の店のページを消す
+
+決まり：
+  - 使うのは店名・★・口コミ件数・業種・地域・公表しているサービスと料金だけ。口コミの文章と写真は使わない。
+  - 数字（予約件数など）はすべて架空。ページにもそう書く。
+  - 優先度 A、営業お断りなし、チェーンでない、きらりん・エアタクミでない、公表アドレスがある店だけ作る。
+  - URL は推測できない文字列。一覧（店名との対応）はリポジトリに入れない。
+"""
+import argparse, csv, datetime, html, json, os, re, secrets, shutil, string, sys
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DEMO = os.path.join(ROOT, "housecleaning")
+OUT = os.path.join(DEMO, "s")
+BASE_URL = "https://miumiumiu4.github.io/arigatou-bunseki/housecleaning/s/"
+EXCLUDE_NAMES = ("きらりん", "エアタクミ")
+
+# サービス列 → 予約フォームの行。区分は価格シートのメニュー区分。
+HOUSE_MENU = [
+    ("ac", "サービス：エアコン", "エアコン壁掛け", "エアコン（壁掛け）", 12000, "台", ""),
+    ("kit", "サービス：レンジフード|サービス：キッチン", "レンジフード|キッチン", "キッチン・換気扇", 16000, "", "2"),
+    ("bath", "サービス：浴室", "浴室", "浴室", 15000, "", "2"),
+    ("wash", "サービス：洗面台", "洗面台", "洗面所", 8000, "", "2"),
+    ("wc", "サービス：トイレ", "トイレ", "トイレ", 7000, "", "3"),
+    ("wm", "サービス：洗濯機", "洗濯機", "洗濯機", 13000, "台", "2"),
+]
+AC_MENU = [
+    ("ac", None, "エアコン壁掛け", "エアコン（壁掛け）", 12000, "台", ""),
+    ("acp", None, "エアコンお掃除機能付き", "お掃除機能付きエアコン", 22000, "台", ""),
+    ("out", None, "エアコン室外機", "室外機", 5000, "台", ""),
+]
+
+
+def yes(row, cols):
+    return any(row.get(c, "").strip() == "はい" for c in cols.split("|"))
+
+
+def is_aircon_only(row):
+    return "エアコン" in row.get("業種", "") and not yes(row, "サービス：浴室|サービス：キッチン|サービス：トイレ")
+
+
+def shop_prices(prices, no):
+    got = {}
+    for p in prices:
+        if p.get("店番号（候補シートの番号）", "").strip() != no:
+            continue
+        kind = p.get("価格の種類（定額・〜から・範囲の下限・範囲の上限・要見積）", "").strip()
+        val = re.sub(r"\D", "", p.get("価格（円・数字のみ）", ""))
+        cat = p.get("メニュー区分（下の決まりの言葉から選ぶ）", "").strip()
+        if not val or kind not in ("定額", "〜から", "範囲の下限") or cat in got:
+            continue
+        got[cat] = (int(val), kind != "定額", p.get("税区分（税込・税抜・不明）", "").strip())
+    return got
+
+
+def menu_for(row, prices):
+    rows = []
+    for key, svc, cats, label, default, unit, mx in (AC_MENU if is_aircon_only(row) else HOUSE_MENU):
+        if svc and not yes(row, svc):
+            continue
+        hit = next((prices[c] for c in cats.split("|") if c in prices), None)
+        if hit:
+            price, frm, tax = hit
+            note = f"{price:,}円{'〜' if frm else ''}{'（税抜）' if tax == '税抜' else ''}"
+        else:
+            price, note = default, f"{default:,}円（仮）"
+        if unit:
+            note = note.replace("円", f"円/{unit}", 1)
+        rows.append(dict(key=key, label=label, price=price, note=note, max=mx, real=bool(hit)))
+    if not rows:  # サービス欄が空なら、ハウスクリーニングの基本の形
+        return menu_for({**row, **{c: "はい" for c in ("サービス：エアコン", "サービス：浴室", "サービス：キッチン", "サービス：トイレ", "サービス：洗面台")}}, prices)
+    return rows
+
+
+def sub1(s, old, new):
+    """必ず1回だけ置き換える。見本のHTMLが変わって合わなくなったら止める。"""
+    n = s.count(old)
+    if n != 1:
+        raise SystemExit(f"置き換え先が {n} 個あります：{old[:40]}")
+    return s.replace(old, new)
+
+
+def beacon(slug, page):
+    return f'<script src="../../beacon.js" data-shop="{slug}" data-page="{page}"></script>\n</body>'
+
+
+def make_booking(row, menu, slug, aircon):
+    s = open(os.path.join(DEMO, "booking.html"), encoding="utf-8").read()
+    shop = html.escape(row["店名"].strip())
+    area = html.escape(row.get("住所（市区町村まで）", "").strip() or row.get("都道府県", ""))
+    kind = html.escape(row.get("業種", "").strip() or "ハウスクリーニング")
+    s = sub1(s, "<title>おそうじ工房そらいろ｜ご予約（見本）</title>", f"<title>{shop}｜ご予約（見本）</title>")
+    s = sub1(s, "ご提案用の見本です（架空の店）。送信はされません。",
+             f"{shop}様へのご提案用の見本です。料金・メニューは{shop}様の公表内容をもとにした仮のもので、送信はされません。")
+    s = sub1(s, "ハウスクリーニング｜横浜市", f"{kind}｜{area}")
+    s = sub1(s, "<h1>おそうじ工房 そらいろ</h1>", f"<h1>{shop}</h1>")
+    s = sub1(s, "おそうじ工房 そらいろ（架空の店）<br>", f"{shop}<br>")
+    s = sub1(s, 'placeholder="例：SORA-1234"', 'placeholder="例：AB-1234"')
+
+    first = next((m["key"] for m in menu if m["key"] == "bath"), menu[0]["key"])
+    lines = []
+    for m in menu:
+        mx = f' max="{m["max"]}"' if m["max"] else ""
+        lines.append(f'  <div class="row"><span>{m["label"]} <small>{m["note"]}</small></span>'
+                     f'<input type="number" min="0"{mx} value="{1 if m["key"] == first else 0}" data-p="{m["price"]}" data-k="{m["key"]}"></div>')
+    keys = {m["key"]: m for m in menu}
+    set_off = 0
+    if {"bath", "wash", "wc"} <= keys.keys():
+        three = sum(keys[k]["price"] for k in ("bath", "wash", "wc"))
+        set_off = 3000
+        lines.append(f'  <label style="font-weight:normal;display:flex;gap:8px;align-items:center"><input type="checkbox" id="set" style="width:auto;margin:0">'
+                     f'<b>水回り3点セット</b>（浴室・洗面所・トイレ）{three - set_off:,}円（別々なら{three:,}円・セットの値引きは例）</label>')
+    real = any(m["real"] for m in menu)
+    lines.append(f'  <p class="why" style="display:block">料金は{shop}様が公表している料金を入れています。（仮）とある所は見つからなかったため仮の料金です。</p>' if real
+                 else '  <p class="why" style="display:block">料金はすべて仮です。公開前に正しい料金に直します。</p>')
+    why = ("何台・どの種類を頼んだかで「次に案内するもの」が決まります。1台だけの方には、次回2台目の案内。2台以上の率がレポートに出ます。" if aircon
+           else "何を頼んだかで「次に案内するもの」が決まります。浴室だけの方には、次回セットの案内。セット率がレポートに出ます。")
+    old_menu = s[s.index('  <div class="row"><span>エアコン（壁掛け）'):s.index('  <span class="why">何を頼んだかで')]
+    s = sub1(s, old_menu, "\n".join(lines) + "\n")
+    s = sub1(s, "何を頼んだかで「次に案内するもの」が決まります。浴室だけの方には、次回セットの案内。セット率がレポートに出ます。", why)
+    if aircon:
+        s = sub1(s, '<label><input type="checkbox">エアコン</label>', '<label><input type="checkbox">浴室・水回り</label>')
+
+    js_old = s[s.index("<script>"):s.index("</script>") + len("</script>")]
+    js = f"""<script>
+const nums=[...document.querySelectorAll('input[data-p]')],set=document.getElementById('set'),out=document.getElementById('sum');
+const k=key=>nums.find(i=>i.dataset.k===key);
+function calc(){{let s=nums.reduce((a,i)=>a+(+i.value||0)*(+i.dataset.p),0);
+  if(set&&set.checked){{s-={set_off};}}
+  out.textContent='¥'+Math.max(s,0).toLocaleString('ja-JP');}}
+nums.forEach(i=>i.addEventListener('input',calc));
+if(set)set.addEventListener('change',()=>{{if(set.checked){{['bath','wash','wc'].forEach(x=>{{if(k(x)&&!+k(x).value)k(x).value=1}})}}calc()}});
+document.getElementById('whyToggle').addEventListener('change',e=>document.body.classList.toggle('nowhy',!e.target.checked));
+calc();
+</script>"""
+    s = sub1(s, js_old, js)
+    if any("（税抜）" in m["note"] for m in menu):
+        s = sub1(s, "<span>概算（税込）</span>", "<span>概算</span>")
+    return sub1(s, "</body>", beacon(slug, "booking"))
+
+
+def make_report(row, menu, slug, aircon):
+    s = open(os.path.join(DEMO, "report.html"), encoding="utf-8").read()
+    raw = row["店名"].strip()
+    shop = html.escape(raw)
+    js_shop = raw.replace("\\", "\\\\").replace("`", "'").replace("$", "＄").replace('"', "”")
+    kind = html.escape(row.get("業種", "").strip() or "ハウスクリーニング")
+    star, cnt = row.get("Googleの★", "").strip(), row.get("口コミ件数", "").strip()
+    seen = row.get("確認した日", "").strip()
+    s = sub1(s, "<title>そらいろ予約レポート（見本）</title>", f"<title>{shop} 予約レポート（見本）</title>")
+    s = sub1(s, "<body>", '<body class="sales">')
+    s = sub1(s, "見本です。店も数字もすべて架空で、実在の店の結果ではありません。",
+             f"{shop}様へのご提案用の見本です。数字はすべて架空で、{shop}様の実際の数字ではありません。")
+    s = sub1(s, "おそうじ工房 そらいろ（架空）｜ハウスクリーニング", f"{shop}｜{kind}")
+    s = sub1(s, "<h1>そらいろ予約レポート</h1>", f"<h1>{shop} 予約レポート</h1>")
+    if star and cnt:
+        when = f"{seen}時点・" if seen else ""
+        s = sub1(s, "毎朝6時に自動で計算し直します</p>",
+                 f"毎朝6時に自動で計算し直します</p>\n  <p class=\"muted\">Googleの口コミ ★{html.escape(star)}・{html.escape(cnt)}件（{when}店舗情報より）。これだけのお客様の予約を、毎朝「次の一手」に変える見本です。</p>")
+    s = sub1(s, "店名・数字はすべて架空です。", "数字はすべて架空です。")
+
+    keys = {m["key"]: m for m in menu}
+    if aircon:
+        ac = keys.get("ac", menu[0])["price"]
+        s = sub1(s, '<div class="l">3点セット率</div><div class="v">12%</div><div class="s">浴室を頼んだ48件のうち</div>',
+                 '<div class="l">2台以上の率</div><div class="v">31%</div><div class="s">エアコンを頼んだ58件のうち</div>')
+        i0 = s.index('<h3>浴室だけの予約が38件</h3>')
+        i1 = s.index('<span class="money">', i0)
+        s = s[:i0] + ('<h3>1台だけの予約が40件</h3>\n    <div class="fact">エアコンの予約58件のうち、2台以上は18件（31%）。2台目は同じ訪問で、移動も準備も1回で済みます。</div>\n'
+                      '    <div class="act"><b>予約確認の翌日に2台目のご案内</b>（メール②）。</div>\n    ') + s[i1:]
+        s = sub1(s, "試算：38件の1割（4件）がセットにすると +¥48,000/月", f"試算：40件の1割（4件）が2台目を足すと +¥{ac * 4:,}/月")
+        g0 = s.index('<div class="card"><h3>頼まれた場所（件）</h3>')
+        g1 = s.index('</div>\n    <div class="card"><h3>第1希望の曜日（件）</h3>')
+        bars = [("壁掛け 1台", 100, 40, True), ("壁掛け 2台以上", 45, 18, False), ("お掃除機能付き", 53, 21, False), ("室外機も", 23, 9, False)]
+        g = '<div class="card"><h3>頼まれた内容（件）</h3>\n' + "".join(
+            f'      <div class="bar"><span>{n}</span><span class="track"><span class="fill{" hi" if h else ""}" style="width:{w}%;display:block"></span></span><span class="v">{v}</span></div>\n'
+            for n, w, v, h in bars) + '      <p class="note">1台だけの予約が7割。2台目のご案内がまだ出ていません。</p>'
+        s = s[:g0] + g + s[g1:]
+        m2_old = s[s.index('["② 3点セットのご案内"'):s.index('["③ 同じ日にもう1か所"')]
+        s = sub1(s, m2_old, '''["② 2台目のご案内","予約確認の翌日・1台だけの方","{作業日}のお伺いで、もう1台ご一緒にいかがですか",
+`{お名前} 様
+
+エアコンクリーニングのご予約、ありがとうございます。
+
+ほかのお部屋のエアコンも、同じ日にまとめてお掃除できます。
+お伺いは1回で済み、お客様のご予定も一日で終わります。
+
+　2台目以降：{2台目の料金：店主様と決めます}
+
+ご希望の場合は、このメールに「2台目希望」とご返信ください。
+当日のお申し出でも承ります。`+SIG],
+''')
+        s = sub1(s, "水回りの汚れは、1年ほどで目立ち始める方が多いです。", "エアコンの中は、1年ほどでほこりやカビがたまり始める方が多いです。")
+    elif {"bath", "wash", "wc"} <= keys.keys():
+        three = sum(keys[k]["price"] for k in ("bath", "wash", "wc"))
+        s = sub1(s, "　水回り3点セット（浴室・洗面所・トイレ）27,000円\n　（別々にご依頼の場合は30,000円）",
+                 f"　水回り3点セット（浴室・洗面所・トイレ）{three - 3000:,}円\n　（別々にご依頼の場合は{three:,}円）")
+        s = sub1(s, "試算：38件の1割（4件）がセットにすると +¥48,000/月",
+                 f"試算：38件の1割（4件）がセットにすると +¥{(keys['wash']['price'] + keys['wc']['price'] - 3000) * 4:,}/月")
+
+    s = sub1(s, "const SIG=`\\n\\nおそうじ工房 そらいろ", f"const SIG=`\\n\\n{js_shop}")
+    s = sub1(s, "ご予約ありがとうございます。おそうじ工房 そらいろです。", f"ご予約ありがとうございます。{js_shop}です。")
+    s = sub1(s, "先日はおそうじ工房 そらいろにご依頼いただき", f"先日は{js_shop}にご依頼いただき")
+    s = sub1(s, "【そらいろ】前回のお掃除から", f"【{js_shop}】前回のお掃除から")
+    s = sub1(s, "いつもありがとうございます。おそうじ工房 そらいろです。", f"いつもありがとうございます。{js_shop}です。")
+    s = sub1(s, "M.forEach((m,i)=>{const b=document.createElement('button');b.type='button';b.textContent=m[0];b.onclick=()=>show(i);tabs.append(b)});show(0);",
+             "M.forEach((m,i)=>{const b=document.createElement('button');b.type='button';b.textContent=m[0];b.onclick=()=>show(i);if(i!==1&&i!==4)b.style.display='none';tabs.append(b)});show(1);")
+    assert "そらいろ" not in s and "架空の店" not in s, "そらいろが残っています"
+    return sub1(s, "</body>", beacon(slug, "report"))
+
+
+def source_label(url):
+    u = url.lower()
+    for key, name in (("google.", "Googleマップの店舗情報"), ("curama", "くらしのマーケットの店舗ページ"),
+                      ("meetsmore", "ミツモアの店舗ページ"), ("ouchino", "おうちのプロの店舗ページ"),
+                      ("instagram", "Instagram のプロフィール")):
+        if key in u:
+            return name
+    return "ホームページ"
+
+
+def draft(row, booking_url, report_url, sender):
+    shop = row["店名"].strip()
+    star, cnt, seen = row.get("Googleの★", "").strip(), row.get("口コミ件数", "").strip(), row.get("確認した日", "").strip()
+    ym = f"{seen[:4]}年{int(seen[5:7])}月時点" if re.match(r"\d{4}-\d{2}", seen) else "2026年10月時点"
+    google = f"（★{star}・口コミ{cnt}件、{ym}）" if star and cnt else ""
+    subject = f"{shop}様の予約を毎朝読む「番頭さん」の見本です"
+    body = f"""{shop}
+ご担当者様
+
+突然のご連絡失礼いたします。
+横浜でエアコン清掃の会社を経営している、ありがとうグループの三浦と申します。
+
+Googleマップで{shop}様を拝見しました{google}。
+
+予約を毎朝読んで「次の一手」と、お客様に送るメールまで出す仕組みを、
+{shop}様の名前で見本にしました。数字は架空です。
+
+予約フォーム：{booking_url}
+レポート：{report_url}
+
+同じ掃除屋として、自社で使っている仕組みです。加盟のお誘いではありません。
+
+ご返事は「見ます」「不要」の一言で十分です。
+「不要」の場合は、今後ご連絡しません。
+
+――――――――――――――――
+ありがとうグループ（エイムポイント合同会社）
+代表　三浦公嗣
+住所：〒220-0005 神奈川県横浜市西区北幸1-11-1 水信ビル7階
+電話：080-4177-2272
+メール：{sender}
+
+今後のご案内が不要な方は、このメールに「不要」とご返信ください。
+以後お送りしません。
+このメールは{shop}様が{source_label(row.get('アドレスの出典URL', ''))}で
+公開されているアドレスにお送りしています。
+――――――――――――――――"""
+    return subject, body
+
+
+def load(path):
+    if not path:
+        return []
+    with open(path, encoding="utf-8-sig", newline="") as f:
+        return list(csv.DictReader(f))
+
+
+MF = ["番号", "店名", "合言葉", "予約フォームのURL", "レポートのURL", "作った日", "状態"]
+
+
+def save_manifest(path, rows):
+    os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
+    with open(path, "w", encoding="utf-8-sig", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=MF)
+        w.writeheader()
+        w.writerows(rows)
+
+
+def new_slug(taken):
+    abc = string.ascii_lowercase + string.digits
+    while True:
+        s = "".join(secrets.choice(abc) for _ in range(10))
+        if s not in taken:
+            return s
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--candidates")
+    ap.add_argument("--prices")
+    ap.add_argument("--manifest", required=True)
+    ap.add_argument("--drafts")
+    ap.add_argument("--senders", default="")
+    ap.add_argument("--per-day", type=int, default=30)
+    ap.add_argument("--start", default=str(datetime.date.today()))
+    ap.add_argument("--remove", help="消す店の番号（カンマ区切り）")
+    a = ap.parse_args()
+
+    manifest = load(a.manifest) if os.path.exists(a.manifest) else []
+    by_no = {m["番号"]: m for m in manifest}
+
+    if a.remove:
+        for no in a.remove.split(","):
+            m = by_no.get(no.strip())
+            if not m:
+                print(f"番号 {no} は一覧にありません", file=sys.stderr)
+                continue
+            shutil.rmtree(os.path.join(OUT, m["合言葉"]), ignore_errors=True)
+            m["状態"] = "消した"
+            print(f"消しました：{m['店名']}")
+        save_manifest(a.manifest, manifest)
+        return
+
+    prices = load(a.prices)
+    senders = [x.strip() for x in a.senders.split(",") if x.strip()] or ["【送信元アドレス】"]
+    made, skipped, drafts = [], [], []
+    for row in load(a.candidates):
+        no, name = row.get("番号", "").strip(), row.get("店名", "").strip()
+        why = ("優先度がA以外" if row.get("優先度（A・B・C）", "").strip() != "A" else
+               "営業お断り" if row.get("営業お断り（なし・あり）", "").strip() == "あり" else
+               "チェーン" if row.get("チェーンか（いいえ・はい）", "").strip() == "はい" else
+               "きらりん・エアタクミ" if any(x in name for x in EXCLUDE_NAMES) else
+               "公表アドレスなし（手紙へ）" if "@" not in row.get("店が公表しているメールアドレス", "") else
+               "以前に消した店" if by_no.get(no, {}).get("状態") == "消した" else "")
+        if not no or not name or why:
+            skipped.append((no, name, why or "番号か店名が空"))
+            continue
+        m = by_no.get(no) or {"番号": no, "店名": name, "合言葉": new_slug({x["合言葉"] for x in manifest}),
+                              "作った日": str(datetime.date.today()), "状態": "作った"}
+        if no not in by_no:
+            manifest.append(m)
+            by_no[no] = m
+        slug = m["合言葉"]
+        aircon = is_aircon_only(row)
+        menu = menu_for(row, shop_prices(prices, no))
+        d = os.path.join(OUT, slug)
+        os.makedirs(d, exist_ok=True)
+        open(os.path.join(d, "booking.html"), "w", encoding="utf-8").write(make_booking(row, menu, slug, aircon))
+        open(os.path.join(d, "report.html"), "w", encoding="utf-8").write(make_report(row, menu, slug, aircon))
+        m["予約フォームのURL"] = BASE_URL + slug + "/booking.html"
+        m["レポートのURL"] = BASE_URL + slug + "/report.html"
+        made.append(m)
+
+    start = datetime.date.fromisoformat(a.start)
+    for i, m in enumerate(made):
+        row = next(r for r in load(a.candidates) if r.get("番号", "").strip() == m["番号"])
+        sender = senders[i % len(senders)]
+        subj, body = draft(row, m["予約フォームのURL"], m["レポートのURL"], sender)
+        drafts.append({"番号": m["番号"], "店名": m["店名"], "送る日": str(start + datetime.timedelta(days=i // a.per_day)),
+                       "送信元": sender, "宛先": row["店が公表しているメールアドレス"].strip(),
+                       "アドレスの出典URL": row.get("アドレスの出典URL", ""), "件名": subj, "本文": body,
+                       "確認用URL（開封に数えない）": m["レポートのURL"] + "?nolog"})
+    save_manifest(a.manifest, manifest)
+    if a.drafts and drafts:
+        with open(a.drafts, "w", encoding="utf-8-sig", newline="") as f:
+            w = csv.DictWriter(f, fieldnames=list(drafts[0].keys()))
+            w.writeheader()
+            w.writerows(drafts)
+    print(json.dumps({"作った": len(made), "外した": [{"番号": n, "店名": s, "理由": r} for n, s, r in skipped]}, ensure_ascii=False, indent=1))
+
+
+if __name__ == "__main__":
+    main()
