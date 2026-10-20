@@ -10,7 +10,7 @@ body{margin:0;font-family:"Noto Sans JP",sans-serif;color:#000;font-size:10.5pt;
 .addr{position:absolute;left:15mm;top:12mm;width:100mm;height:50mm}
 .from{position:absolute;right:15mm;top:14mm;width:80mm;font-size:9pt;line-height:1.6;text-align:right}
 .slot{display:inline-block;min-width:60mm;height:6mm;vertical-align:middle}
-.body{position:absolute;left:20mm;right:20mm;top:68mm}
+.body{position:absolute;left:20mm;right:20mm;top:64mm}
 h1{font-size:13pt;margin:0 0 5mm;text-align:center}
 p{margin:0 0 3.2mm}
 .to{font-size:12pt;font-weight:700;margin-bottom:5mm}
@@ -21,23 +21,29 @@ p{margin:0 0 3.2mm}
 .url{font-family:monospace;font-size:9pt;white-space:nowrap}
 .qr img{width:32mm;height:32mm;display:block}
 .small{font-size:8.5pt;line-height:1.6}
+.sign{font-size:9.5pt;line-height:1.6;margin-top:5mm}
 </style></head>
 <body><div class="page">
 <div class="addr"></div>
-<div class="from">差出日：<span class="slot s5" style="min-width:32mm">{{差出日}}</span><br>
-ありがとうグループ（エイムポイント合同会社）<br>代表　三浦公嗣<br>〒220-0005 神奈川県横浜市西区北幸1-11-1 水信ビル7階<br>電話 080-4177-2272／info@arigatouosouji.com</div>
+<div class="from">差出日：<span class="slot s4" style="min-width:32mm">{{差出日}}</span></div>
 <div class="body">
 <div class="to"><span class="slot s1" style="min-width:120mm">{{宛名行}}</span></div>
-<h1>予約を毎朝読んで「次の一手」を出す仕組みの見本をお届けします<br><span style="font-size:10pt;font-weight:400">（営業のお手紙です）</span></h1>
-<p>突然のお手紙失礼いたします。横浜でエアコン清掃の会社を経営している、ありがとうグループの三浦と申します。</p>
-<p>Googleマップで貴店を拝見しました。<br>Googleでの評価：<span class="slot s2" style="min-width:100mm">{{評価}}</span></p>
-<p>これだけのお客様の予約を毎朝読んで、「誰に・いつ・何をご案内するか」と、お客様にそのまま送れるメールまで出す仕組みを、貴店の名前で見本にしました。数字は架空です。</p>
-<div class="box"><div><b>見本の開き方</b>
+<p>突然のお手紙失礼いたします。<br>横浜でエアコン清掃の会社を経営している、ありがとうグループの三浦と申します。</p>
+<p>Googleマップで貴店を拝見しました。<br>Googleでの評価：<span class="slot s2" style="min-width:100mm">{{評価}}</span><br>
+お客様にこれだけ選ばれているお店の「予約」を毎朝読んで、「次の一手」と、お客様にそのまま送れるメールまで出す仕組みを、貴店の名前で見本にしてみました。数字はすべて架空です。</p>
+<div class="box"><div><b>まず、この QR コードから1分だけご覧ください。</b>
 <ol><li>スマートフォンで右の QR コードを読む<br>（またはこのアドレスを入力）<br><span class="url">miumiumiu4.github.io/arigatou-bunseki/housecleaning/</span></li>
 <li>合言葉を入れる　合言葉：<span class="slot s3 code" style="min-width:50mm">{{合言葉}}</span></li></ol></div>
 <div class="qr"><img src="qr.svg" alt=""></div></div>
-<p>同じ掃除屋として、自社で使っている仕組みです。加盟のお誘いではありません。ご覧になって気になりましたら、お電話（080-4177-2272）でもメール（info@arigatouosouji.com）でも、一言ください。</p>
-<p>ご不要でしたら、何もしていただかなくて大丈夫です。こちらから再度ご連絡はいたしません。</p>
-<p>見本を消す日：<span class="slot s4" style="min-width:50mm">{{消す日}}</span></p>
-<p class="small">貴店の住所は、Googleマップの店舗情報で公開されているものを使いました。見本のページは検索に出ない場所に置いており、消す日に消します。</p>
+<p>見本には、こんなことが載っています。<br>
+　・予約が集まる曜日と時間帯、取りこぼしている枠<br>
+　・1件あたりの金額を上げる「同じ訪問で追加」のご案内<br>
+　・11か月後にもう一度頼んでいただくための自動のお便り</p>
+<p>同じ掃除屋として、自社で実際に使っている仕組みです。加盟のお誘いではありません。</p>
+<p>ご覧になって気になりましたら、見本のページにある「見ました」（3つだけ質問があります）か、下のメールアドレスか電話に一言ください。（お電話は三浦の携帯につながります。出られないときは折り返します）<br>
+ご不要でしたら、何もしていただかなくて大丈夫です。こちらから再度のご連絡はいたしません。</p>
+<p class="sign">ありがとうグループ（エイムポイント合同会社）　代表　三浦公嗣<br>
+〒220-0005 神奈川県横浜市西区北幸1-11-1 水信ビル7階　電話 080-4177-2272<br>
+メール：miura1@bunseki.arigatouosouji.com</p>
+<p class="small">※ このお手紙は営業のご案内です。今後のご案内が不要な場合は、上のメールアドレスまでお知らせください。貴店の住所は、Googleマップの店舗情報で公開されているものを使いました。</p>
 </div></div></body></html>

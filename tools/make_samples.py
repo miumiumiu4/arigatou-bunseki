@@ -86,7 +86,8 @@ def sub1(s, old, new):
 
 
 def beacon(slug, page):
-    return f'<script src="../../beacon.js" data-shop="{slug}" data-page="{page}"></script>\n</body>'
+    return (f'<script src="../../beacon.js" data-shop="{slug}" data-page="{page}"></script>\n'
+            f'<script src="../../mita.js" data-shop="{slug}" data-page="{page}"></script>\n</body>')
 
 
 def make_booking(row, menu, slug, aircon):
@@ -270,7 +271,7 @@ LANDING = "miumiumiu4.github.io/arigatou-bunseki/housecleaning/"
 # 並びは公式のフォーマット（csv/1.csv）の1行目で確かめること（初回の Chrome プロンプトで確認）。
 WL_HEAD = ["郵便番号(3桁)", "郵便番号(4桁)", "都道府県名", "市区町村名", "町域名", "丁目・番地等",
            "アパート・ビル・マンション", "会社名", "敬称(会社用)", "部署名", "敬称(部署用)", "肩書・役職", "お名前(漢字)", "敬称"]
-WL_MERGE = ["宛名行", "評価", "合言葉", "消す日", "差出日"]
+WL_MERGE = ["宛名行", "評価", "合言葉", "差出日"]
 PREFS = r"(北海道|東京都|京都府|大阪府|..県|...県)"
 
 
@@ -307,7 +308,7 @@ def write_letters(folder, pairs):
         when = f"、{seen[:4]}年{int(seen[5:7])}月時点" if re.match(r"\d{4}-\d{2}", seen) else ""
         star, cnt = row.get("Googleの★", "").strip(), row.get("口コミ件数", "").strip()
         merge = [f"{name}　店主様"[:50], f"★{star}・口コミ{cnt}件（Googleマップ{when}）" if star and cnt else "",
-                 m["合言葉"], jp_date(m["消す日"]), jp_date(m["手紙を送る日"])]
+                 m["合言葉"], jp_date(m["手紙を送る日"])]
         by_day.setdefault(m["手紙を送る日"], []).append(a + [name[:35], "御中", "", "", "", "", ""] + merge)
     for day, lines in by_day.items():
         path = os.path.join(folder, f"手紙_差し込み_{day}.csv")
@@ -325,7 +326,7 @@ def load(path):
         return list(csv.DictReader(f))
 
 
-MF = ["番号", "店名", "合言葉", "予約フォームのURL", "レポートのURL", "作った日", "状態", "送り方", "手紙を送る日", "消す日"]
+MF = ["番号", "店名", "合言葉", "予約フォームのURL", "レポートのURL", "作った日", "状態", "送り方", "手紙を送る日"]
 
 
 def save_manifest(path, rows):
@@ -414,7 +415,6 @@ def main():
     for i, m in enumerate(letters):
         day = start + datetime.timedelta(days=i // a.letters_per_day)
         m["手紙を送る日"] = str(day)
-        m["消す日"] = str(day + datetime.timedelta(days=30))
     if a.letters and letters:
         write_letters(a.letters, [(rows[m["番号"]], m) for m in letters])
     for i, m in enumerate(mails):
