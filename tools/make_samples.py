@@ -264,6 +264,60 @@ Googleマップで{shop}様を拝見しました{google}。
     return subject, body
 
 
+ADDR_COL = "郵送用の住所（〒から番地まで・店が公表している物だけ）"
+LANDING = "miumiumiu4.github.io/arigatou-bunseki/housecleaning/"
+# 日本郵便 Webレター「差込データ」の1〜14列目（宛先）。差込データファイル作成ルールの項目名。
+# 並びは公式のフォーマット（csv/1.csv）の1行目で確かめること（初回の Chrome プロンプトで確認）。
+WL_HEAD = ["郵便番号(3桁)", "郵便番号(4桁)", "都道府県名", "市区町村名", "町域名", "丁目・番地等",
+           "アパート・ビル・マンション", "会社名", "敬称(会社用)", "部署名", "敬称(部署用)", "肩書・役職", "お名前(漢字)", "敬称"]
+WL_MERGE = ["宛名行", "評価", "合言葉", "消す日", "差出日"]
+PREFS = r"(北海道|東京都|京都府|大阪府|..県|...県)"
+
+
+def split_address(text):
+    """「〒233-0002 神奈川県横浜市港南区上大岡西1-2-3 ○○ビル2F」を Webレターの宛先の欄に分ける。分けられなければ None。"""
+    t = re.sub(r"\s+", " ", text.replace("－", "-").replace("ー", "-").replace("−", "-")).strip()
+    t = t.translate(str.maketrans("０１２３４５６７８９", "0123456789"))
+    m = re.match(r"〒?\s*(\d{3})-?(\d{4})\s*" + PREFS + r"(.+?郡.+?[町村]|.+?市(?:.+?区)?|.+?区|.+?[町村])(.*)$", t)
+    if not m:
+        return None
+    zip3, zip4, pref, city, rest = m.groups()
+    rest = rest.strip()
+    n = re.search(r"\d", rest)
+    town, num = (rest[:n.start()], rest[n.start():]) if n else (rest, "")
+    num, _, bldg = num.partition(" ")
+    if not town and not num:
+        return None
+    return [zip3, zip4, pref, city, town.strip(), num.strip(), bldg.strip()]
+
+
+def jp_date(d):
+    d = datetime.date.fromisoformat(d) if isinstance(d, str) else d
+    return f"{d.year}年{d.month}月{d.day}日"
+
+
+def write_letters(folder, pairs):
+    """送る日ごとに Webレターの差込データ（Shift_JIS）を書く。1行＝1通。"""
+    os.makedirs(folder, exist_ok=True)
+    by_day = {}
+    for row, m in pairs:
+        a = split_address(row.get(ADDR_COL, ""))
+        name = row["店名"].strip()
+        seen = row.get("確認した日", "").strip()
+        when = f"、{seen[:4]}年{int(seen[5:7])}月時点" if re.match(r"\d{4}-\d{2}", seen) else ""
+        star, cnt = row.get("Googleの★", "").strip(), row.get("口コミ件数", "").strip()
+        merge = [f"{name}　店主様"[:50], f"★{star}・口コミ{cnt}件（Googleマップ{when}）" if star and cnt else "",
+                 m["合言葉"], jp_date(m["消す日"]), jp_date(m["手紙を送る日"])]
+        by_day.setdefault(m["手紙を送る日"], []).append(a + [name[:35], "御中", "", "", "", "", ""] + merge)
+    for day, lines in by_day.items():
+        path = os.path.join(folder, f"手紙_差し込み_{day}.csv")
+        with open(path, "w", encoding="shift_jis", errors="replace", newline="") as f:
+            w = csv.writer(f)
+            w.writerow(WL_HEAD + WL_MERGE)
+            w.writerows(lines)
+        print(f"手紙 {len(lines)}通：{path}", file=sys.stderr)
+
+
 def load(path):
     if not path:
         return []
@@ -271,7 +325,7 @@ def load(path):
         return list(csv.DictReader(f))
 
 
-MF = ["番号", "店名", "合言葉", "予約フォームのURL", "レポートのURL", "作った日", "状態"]
+MF = ["番号", "店名", "合言葉", "予約フォームのURL", "レポートのURL", "作った日", "状態", "送り方", "手紙を送る日", "消す日"]
 
 
 def save_manifest(path, rows):
@@ -283,9 +337,9 @@ def save_manifest(path, rows):
 
 
 def new_slug(taken):
-    abc = string.ascii_lowercase + string.digits
+    abc = "abcdefghjkmnpqrstuvwxyz23456789"  # 手紙で打ち込むので 0/o・1/l/i は使わない
     while True:
-        s = "".join(secrets.choice(abc) for _ in range(10))
+        s = "".join(secrets.choice(abc) for _ in range(8))
         if s not in taken:
             return s
 
@@ -298,6 +352,8 @@ def main():
     ap.add_argument("--drafts")
     ap.add_argument("--senders", default="")
     ap.add_argument("--per-day", type=int, default=30)
+    ap.add_argument("--letters", help="手紙の差し込みCSVを置くフォルダ（送る日ごとに1ファイル）")
+    ap.add_argument("--letters-per-day", type=int, default=15)
     ap.add_argument("--start", default=str(datetime.date.today()))
     ap.add_argument("--remove", help="消す店の番号（カンマ区切り）")
     a = ap.parse_args()
@@ -326,7 +382,7 @@ def main():
                "営業お断り" if row.get("営業お断り（なし・あり）", "").strip() == "あり" else
                "チェーン" if row.get("チェーンか（いいえ・はい）", "").strip() == "はい" else
                "きらりん・エアタクミ" if any(x in name for x in EXCLUDE_NAMES) else
-               "公表アドレスなし（手紙へ）" if "@" not in row.get("店が公表しているメールアドレス", "") else
+               "アドレスも郵送用の住所もない" if "@" not in row.get("店が公表しているメールアドレス", "") and not split_address(row.get(ADDR_COL, "")) else
                "以前に消した店" if by_no.get(no, {}).get("状態") == "消した" else "")
         if not no or not name or why:
             skipped.append((no, name, why or "番号か店名が空"))
@@ -348,8 +404,19 @@ def main():
         made.append(m)
 
     start = datetime.date.fromisoformat(a.start)
-    for i, m in enumerate(made):
-        row = next(r for r in load(a.candidates) if r.get("番号", "").strip() == m["番号"])
+    rows = {r.get("番号", "").strip(): r for r in load(a.candidates)}
+    mails = [m for m in made if "@" in rows[m["番号"]].get("店が公表しているメールアドレス", "")]
+    letters = [m for m in made if m not in mails]
+    for m in made:
+        m["送り方"] = "メール" if m in mails else "手紙"
+    for i, m in enumerate(letters):
+        day = start + datetime.timedelta(days=i // a.letters_per_day)
+        m["手紙を送る日"] = str(day)
+        m["消す日"] = str(day + datetime.timedelta(days=30))
+    if a.letters and letters:
+        write_letters(a.letters, [(rows[m["番号"]], m) for m in letters])
+    for i, m in enumerate(mails):
+        row = rows[m["番号"]]
         sender = senders[i % len(senders)]
         subj, body = draft(row, m["予約フォームのURL"], m["レポートのURL"], sender)
         drafts.append({"番号": m["番号"], "店名": m["店名"], "送る日": str(start + datetime.timedelta(days=i // a.per_day)),

@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>見本を開く｜ありがとうグループ</title>
+<style>
+  :root{--ink:#1d2b33;--muted:#5b6b74;--line:#d9e2e7;--bg:#f4f7f8;--card:#fff;--accent:#1f6f8b}
+  @media (prefers-color-scheme:dark){:root{--ink:#e8eef1;--muted:#a9b7bf;--line:#33434c;--bg:#121a1f;--card:#1b252b;--accent:#6cb8d3}}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:"Hiragino Sans","Noto Sans JP",system-ui,sans-serif;line-height:1.7}
+  main{max-width:440px;margin:0 auto;padding:40px 16px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px}
+  h1{font-size:22px;margin:0 0 8px}
+  p{margin:0 0 16px;color:var(--muted);font-size:15px}
+  input{width:100%;font-size:24px;letter-spacing:.15em;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);text-align:center}
+  button,a.btn{display:block;width:100%;margin-top:12px;padding:14px;border:0;border-radius:10px;background:var(--accent);color:#fff;font-size:17px;text-align:center;text-decoration:none;cursor:pointer}
+  a.btn.sub{background:transparent;color:var(--accent);border:1px solid var(--accent)}
+  #msg{margin-top:12px;font-size:14px;color:#b3412e;min-height:1em}
+  #go{display:none}
+  footer{margin-top:24px;font-size:12px;color:var(--muted)}
+</style>
+</head>
+<body>
+<main>
+  <div class="card">
+    <h1>見本を開く</h1>
+    <p>お手紙に書いてある「合言葉」（英数字8文字）を入れてください。</p>
+    <form id="f"><input id="code" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="12" inputmode="latin" aria-label="合言葉"><button type="submit">開く</button></form>
+    <div id="msg"></div>
+    <div id="go"><a class="btn" id="rep">レポートの見本を見る</a><a class="btn sub" id="book">予約フォームの見本を見る</a></div>
+  </div>
+  <footer>ありがとうグループ（エイムポイント合同会社）／〒220-0005 神奈川県横浜市西区北幸1-11-1 水信ビル7階／電話 080-4177-2272／info@arigatouosouji.com</footer>
+</main>
+<script>
+document.getElementById('f').addEventListener('submit', async e => {
+  e.preventDefault();
+  const c = document.getElementById('code').value.toLowerCase().replace(/[^a-z0-9]/g, '');
+  const msg = document.getElementById('msg'), go = document.getElementById('go');
+  msg.textContent = ''; go.style.display = 'none';
+  if (c.length < 6) { msg.textContent = '合言葉をもう一度お確かめください。'; return; }
+  try {
+    const r = await fetch('s/' + c + '/report.html', { method: 'HEAD' });
+    if (!r.ok) throw 0;
+  } catch (_) { msg.textContent = '見本が見つかりません。合言葉をお確かめください。お手紙に書いた日を過ぎた見本は消えています。'; return; }
+  document.getElementById('rep').href = 's/' + c + '/report.html';
+  document.getElementById('book').href = 's/' + c + '/booking.html';
+  go.style.display = 'block';
+});
+</script>
+</body>
+</html>
