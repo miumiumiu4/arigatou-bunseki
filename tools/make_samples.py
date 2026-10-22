@@ -349,6 +349,13 @@ CONTACT_TEL_IS_TEMP = True
 CONTACT_MAIL = "miura1@bunseki.arigatouosouji.com"
 # 「データはこう溜まる」の見本シート（Google スプレッドシート・仮の数字・個人情報なし）
 SHEET_URL = "https://docs.google.com/spreadsheets/d/1xQEPbSlHTzcW1Qk8cYtnBVcrsGGqtrT8bCxr3Z2tm28/edit?usp=sharing"
+# バナーに出す価格（税込）。変える時はここだけ直して作り直す。
+PRICE_MAIN = ("制作代金 買い切り", "110,000円（税込）")
+PRICE_PLANS = [
+    ("年額", "5,500円（税込）", ["顧客分析なし", "サイトの修正は年1回"]),
+    ("月額", "5,500円（税込）", ["顧客分析あり", "毎月1回のレポート", "修正は月5回まで（6回目から1回2,200円）"]),
+    ("月額", "33,000円（税込）", ["顧客分析", "集客コンサル"]),
+]
 BANNER_CSS = (".contact{max-width:960px;margin:8px auto 16px;padding:0 16px}"
               ".contact .in{background:linear-gradient(135deg,var(--c),color-mix(in srgb,var(--c) 70%,#000));color:#fff;border-radius:18px;padding:22px 18px;text-align:center;box-shadow:0 6px 18px rgba(0,0,0,.12)}"
               ".contact h2{color:#fff;font-size:20px;line-height:1.5;margin:0 0 4px}"
@@ -358,7 +365,17 @@ BANNER_CSS = (".contact{max-width:960px;margin:8px auto 16px;padding:0 16px}"
               "text-decoration:none;font-weight:700;font-size:19px;padding:12px 14px}"
               ".contact a.tel{background:#fff;color:var(--c)}"
               ".contact a.mail{background:#f2a516;color:#3b2600}"
-              ".contact small{display:block;margin-top:10px;font-size:12px;opacity:.85}")
+              ".contact small{display:block;margin-top:10px;font-size:12px;opacity:.85}"
+              ".contact .price{background:#fff;color:#1c2430;border-radius:14px;padding:14px 12px;margin:10px 0 12px}"
+              ".contact .tx{display:inline-block;font-size:.62em;font-weight:700}"
+              ".contact .price .k{display:block;font-size:14px;font-weight:700;color:var(--c)}"
+              ".contact .price .y{display:block;font-size:30px;font-weight:800;line-height:1.3;letter-spacing:.01em}"
+              ".contact .plans{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0 0 16px;padding:0;list-style:none;text-align:left}"
+              ".contact .plans>li{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.35);border-radius:12px;padding:10px 12px}"
+              ".contact .plans .n{display:inline-block;font-size:12px;font-weight:700;background:#f2a516;color:#3b2600;border-radius:999px;padding:0 8px}"
+              ".contact .plans b{display:block;font-size:18px;line-height:1.4;margin-top:4px}"
+              ".contact .plans ul{margin:4px 0 0;padding-left:1.1em;font-size:13px;line-height:1.6}"
+              "@media(max-width:640px){.contact .plans{grid-template-columns:1fr}.contact .price .y{font-size:26px}}")
 
 
 def contact_banner(shop_plain, slug):
@@ -366,9 +383,16 @@ def contact_banner(shop_plain, slug):
     tel_raw = re.sub(r"[^0-9+]", "", CONTACT_TEL)
     subj = quote(f"見本について（{shop_plain}・合言葉 {slug}）")
     body = quote(f"見本を見ました。\n店名：{shop_plain}\n合言葉：{slug}\n\n（聞きたいことをお書きください）")
+    tax = lambda v: html.escape(v).replace("（税込）", '<span class="tx">（税込）</span>')
+    plans = "".join(
+        f'<li><span class="n">{"①②③④⑤"[i]}</span><b>{html.escape(k)} {tax(v)}</b><ul>'
+        + "".join(f"<li>{html.escape(x)}</li>" for x in xs) + "</ul></li>"
+        for i, (k, v, xs) in enumerate(PRICE_PLANS))
     note = "<small>電話番号は準備中のため仮の番号です。メールでお問い合わせください。</small>" if CONTACT_TEL_IS_TEMP else ""
     return (f'<section class="contact" aria-label="お問い合わせ"><div class="in">'
             f'<h2>気になった方は、電話かメールでご連絡ください</h2>'
+            f'<div class="price"><span class="k">{html.escape(PRICE_MAIN[0])}</span><span class="y">{tax(PRICE_MAIN[1])}</span></div>'
+            f'<ol class="plans">{plans}</ol>'
             f'<p>この見本の仕組みについて、三浦がご説明します。</p>'
             f'<div class="row"><a class="cb tel" href="tel:{tel_raw}">📞 電話する</a>'
             f'<a class="cb mail" href="mailto:{CONTACT_MAIL}?subject={subj}&amp;body={body}">✉ メールで聞く</a></div>'
