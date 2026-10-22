@@ -1,6 +1,6 @@
 // 店ごとの見本が開かれた日時を記録する。URL の最後に ?nolog を付けると記録しない（送る前の確認用）。
 (function () {
-  var GAS = ''; // 開封を記録する GAS のウェブアプリの URL（https://script.google.com/macros/s/…/exec）
+  var GAS = 'https://script.google.com/macros/s/AKfycbw5Cx530MXi10QGEbw-H5s0_I7MapjJgTGUDeQV2MIi-oc6rrBIyMeBElZpp8KOXr2azw/exec'; // 開封を記録する GAS のウェブアプリの URL（https://script.google.com/macros/s/…/exec）
   window.ARIGATOU_GAS = GAS; // 「見ました」フォーム（mita.js）も同じ受け口に送る
   var d = document.currentScript && document.currentScript.dataset;
   if (!GAS || !d || /[?&]nolog/.test(location.search)) return;
