@@ -375,10 +375,15 @@ BANNER_CSS = (".contact{max-width:960px;margin:8px auto 16px;padding:0 16px}"
               ".contact .plans .n{display:inline-block;font-size:12px;font-weight:700;background:#f2a516;color:#3b2600;border-radius:999px;padding:0 8px}"
               ".contact .plans b{display:block;font-size:18px;line-height:1.4;margin-top:4px}"
               ".contact .plans ul{margin:4px 0 0;padding-left:1.1em;font-size:13px;line-height:1.6}"
+              ".contact a.toreport-link{display:block;background:#eaf6ee;color:#1d5a35;border:2px solid #7cc496;border-radius:14px;"
+              "padding:14px 16px;margin:0 0 16px;text-decoration:none;box-shadow:0 3px 0 rgba(0,0,0,.15)}"
+              ".contact a.toreport-link b{display:block;font-size:18px;line-height:1.45}"
+              ".contact a.toreport-link span{display:block;font-size:13px;color:#3b6a4c;margin-top:4px;line-height:1.5}"
               "@media(max-width:640px){.contact .plans{grid-template-columns:1fr}.contact .price .y{font-size:26px}}")
 
 
-def contact_banner(shop_plain, slug):
+def contact_banner(shop_plain, slug, to_report=False):
+    """下のバナー：見出し→価格表（PRICE_MAIN・PRICE_PLANS）→（予約ページだけ）レポートへの導線→説明の一言→電話／メール。"""
     from urllib.parse import quote
     tel_raw = re.sub(r"[^0-9+]", "", CONTACT_TEL)
     subj = quote(f"見本について（{shop_plain}・合言葉 {slug}）")
@@ -389,14 +394,51 @@ def contact_banner(shop_plain, slug):
         + "".join(f"<li>{html.escape(x)}</li>" for x in xs) + "</ul></li>"
         for i, (k, v, xs) in enumerate(PRICE_PLANS))
     note = "<small>電話番号は準備中のため仮の番号です。メールでお問い合わせください。</small>" if CONTACT_TEL_IS_TEMP else ""
+    lead = ('<a class="toreport-link" href="report.html" data-keepnolog>'
+            '<b>📊 このサイトを運用した場合の分析レポートの例を見る →</b>'
+            '<span>予約がどう分析され、次の一手がどう出るかを、実際の形でご覧いただけます</span></a>') if to_report else ""
     return (f'<section class="contact" aria-label="お問い合わせ"><div class="in">'
             f'<h2>気になった方は、電話かメールでご連絡ください</h2>'
             f'<div class="price"><span class="k">{html.escape(PRICE_MAIN[0])}</span><span class="y">{tax(PRICE_MAIN[1])}</span></div>'
             f'<ol class="plans">{plans}</ol>'
+            f'{lead}'
             f'<p>この見本の仕組みについて、三浦がご説明します。</p>'
             f'<div class="row"><a class="cb tel" href="tel:{tel_raw}">📞 電話する</a>'
             f'<a class="cb mail" href="mailto:{CONTACT_MAIL}?subject={subj}&amp;body={body}">✉ メールで聞く</a></div>'
             f'{note}</div></section>')
+
+
+PHOTO_COL = "写真（オーナー提供のURL・最大3つを「、」でつなぐ）"  # 候補シートの68列目
+PHOTO_FRAME = '<div class="photo" role="img" aria-label="写真の枠"><span>お店の写真に差し替えます</span></div>'
+
+
+def photo_urls(text):
+    """「、」区切りの URL を最大3つ。https の URL（確認用に data:image/ も）だけを通す。"""
+    out = []
+    for u in re.split(r"[、\s]+", (text or "").strip()):
+        if re.match(r"^(https://[^\s\"'<>]+|data:image/[a-z+]+;[^\s\"'<>]+)$", u) and u not in out:
+            out.append(u)
+    return out[:3]
+
+
+def photo_credit(row):
+    """メモ列の「写真提供：○○」から提供者名を取る。無ければ空。"""
+    m = re.search(r"写真提供[:：]\s*([^、。,\n]+)", row.get("メモ", ""))
+    return m.group(1).strip() if m else ""
+
+
+def photo_block(urls, credit=""):
+    """1枚目を上の大きな枠に、2〜3枚目を小さく横に。src は URL を参照するだけ（保存・複製しない）。"""
+    if not urls:
+        return PHOTO_FRAME
+    back = "this.parentNode.classList.remove('has');this.remove()"
+    img = lambda u, a, extra="": (f'<img src="{html.escape(u, quote=True)}" alt="{a}" loading="lazy" decoding="async" '
+                                  f'referrerpolicy="no-referrer"{extra}>')
+    main = (f'<div class="photo has" role="img" aria-label="お店の写真"><span>お店の写真に差し替えます</span>'
+            + img(urls[0], "お店の写真", f' onerror="{back}"') + "</div>")
+    thumbs = "".join(img(u, f"お店の写真{i + 2}", ' onerror="this.remove()"') for i, u in enumerate(urls[1:]))
+    note = "写真：お店が公開している物を参照しています。不要ならすぐ消します" + (f"（提供：{html.escape(credit)}）" if credit else "")
+    return main + f'<div class="thumbs">{thumbs}</div><p class="credit">{note}</p>'
 
 
 def make_report_v2(row, slug, color):
@@ -419,7 +461,7 @@ def make_report_v2(row, slug, color):
     return s
 
 
-def make_yoyaku(row, prices, slug, color, mode=None):
+def make_yoyaku(row, prices, slug, color, mode=None, photos=""):
     s = open(os.path.join(DEMO, "yoyaku_template.html"), encoding="utf-8").read()
     no = row.get("番号", "").strip()
     shop = html.escape(display_name(row["店名"].strip()))
@@ -463,7 +505,9 @@ def make_yoyaku(row, prices, slug, color, mode=None):
         "PAGE_JSON": js, "SLUG": slug,
         "STOP_SUBJECT": quote(f"不要（合言葉 {slug}）"),
         "STOP_BODY": quote(f"今後のご案内は不要です。\n返事：不要\n合言葉：{slug}\n（このまま送ってください）"),
-        "BANNER_CSS": BANNER_CSS, "BANNER": contact_banner(display_name(row["店名"].strip()), slug),
+        "BANNER_CSS": BANNER_CSS, "BANNER": contact_banner(display_name(row["店名"].strip()), slug, to_report=True),
+        "PHOTO": photo_block(photo_urls(photos), photo_credit(row)),
+        "BAND_PHOTO": "写真はお店が公開している物を参照しています" if photo_urls(photos) else "写真は仮の物です",
         "SCRIPTS": f'<script src="../../beacon.js" data-shop="{slug}" data-page="yoyaku"></script>',
     }
     for k, v in fill.items():
@@ -539,7 +583,7 @@ def load(path):
         return list(csv.DictReader(f))
 
 
-MF = ["番号", "店名", "合言葉", "予約フォームのURL", "レポートのURL", "作った日", "状態", "送り方", "手紙を送る日"]
+MF = ["番号", "店名", "合言葉", "予約フォームのURL", "レポートのURL", "作った日", "状態", "送り方", "手紙を送る日", "写真"]
 
 
 def save_manifest(path, rows):
@@ -574,6 +618,9 @@ def main():
     ap.add_argument("--yoyaku", action="store_true", help="SMS 用：booking.html の代わりに yoyaku.html（参考サイトの4段の形）を作る。メール下書き・手紙は作らない")
     ap.add_argument("--color", default="#13294b", help="--yoyaku のテーマ色（候補シートに「テーマ色」列があればそちらが先）")
     ap.add_argument("--mode", choices=["menu", "consult", "visit"], help="--yoyaku の1段目を業種によらず固定する（省くと業種から決める）")
+    ap.add_argument("--photos", action="append", default=[], metavar="番号=URL、URL",
+                    help="--yoyaku の写真を店ごとに指定（くり返し可。最大3つを「、」でつなぐ）。一覧.csv の「写真」列・候補シートの68列目より先。"
+                         "空（番号=）にすると写真を外す")
     ap.add_argument("--only", help="作る店の番号（カンマ区切り）。省くと条件に合う全部の店")
     a = ap.parse_args()
 
@@ -622,7 +669,12 @@ def main():
             os.makedirs(d, exist_ok=True)
             color = row.get("テーマ色", "").strip()
             color = color if re.fullmatch(r"#[0-9a-fA-F]{6}", color) else a.color
-            open(os.path.join(d, "yoyaku.html"), "w", encoding="utf-8").write(make_yoyaku(row, prices, slug, color, a.mode))
+            # 写真の URL：--photos ＞ 一覧.csv の「写真」列 ＞ 候補シートの68列目。参照するだけでファイルは保存しない
+            given = dict(x.split("=", 1) for x in a.photos if "=" in x)
+            if no in given:
+                m["写真"] = given[no].strip()
+            photos = m.get("写真", "") or row.get(PHOTO_COL, "")
+            open(os.path.join(d, "yoyaku.html"), "w", encoding="utf-8").write(make_yoyaku(row, prices, slug, color, a.mode, photos))
             open(os.path.join(d, "report.html"), "w", encoding="utf-8").write(make_report_v2(row, slug, color))
             m["予約フォームのURL"] = BASE_URL + slug + "/yoyaku.html"
             m["レポートのURL"] = BASE_URL + slug + "/report.html"

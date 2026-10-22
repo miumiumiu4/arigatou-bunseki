@@ -23,6 +23,13 @@
   .shop{background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-top:16px}
   .photo{height:170px;background:linear-gradient(135deg,color-mix(in srgb,var(--c) 70%,#fff),color-mix(in srgb,var(--c) 25%,#fff));display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;font-weight:700;text-shadow:0 1px 2px rgba(0,0,0,.25);letter-spacing:.05em}
   .photo span{border:1.5px dashed rgba(255,255,255,.85);border-radius:8px;padding:6px 12px}
+  .photo{position:relative;overflow:hidden}
+  .photo img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+  .photo.has span{display:none}
+  .thumbs{display:flex;gap:6px;padding:6px 6px 0}
+  .thumbs:empty{display:none}
+  .thumbs img{flex:0 1 31%;width:31%;aspect-ratio:4/3;object-fit:cover;border-radius:8px;background:#e3e7ec;display:block}
+  .credit{font-size:11.5px;color:var(--muted);line-height:1.5;margin:6px 16px 0}
   .shop .in{padding:14px 16px 16px}
   .shop h1{font-size:20px;line-height:1.4;margin:0 0 6px;color:var(--c)}
   .star{font-size:14px;margin:0 0 8px}.star b{color:#e09a00;font-size:16px}
@@ -103,7 +110,7 @@
 </style>
 </head>
 <body>
-<div class="sample">これは見本です。数字は架空、写真は仮の物です。不要ならこのページは消します。</div>
+<div class="sample">これは見本です。数字は架空、{{BAND_PHOTO}}。不要ならこのページは消します。</div>
 
 <header>
   <div class="name"><b>{{SHOP}}</b><small>ご予約</small></div>
@@ -112,7 +119,8 @@
 
 <main>
   <section class="shop">
-    <div class="photo" role="img" aria-label="写真の枠"><span>お店の写真に差し替えます</span></div>
+    <!-- 写真：生成器が店の公開している写真の URL を img の src に入れる（ファイルは保存しない）。無ければ灰色の枠のまま。読めない時も枠に戻す -->
+    {{PHOTO}}
     <div class="in">
       <h1>{{SHOP}}</h1>
       {{STAR_LINE}}
@@ -329,6 +337,8 @@ q('#send').addEventListener('click',()=>{
   fetch(window.ARIGATOU_GAS,{method:'POST',mode:'no-cors',body,keepalive:true}).then(once,once);
 });
 addEventListener('pageshow',()=>{const b=q('#send');b.disabled=false;b.textContent='この内容で予約する →'});
+// 確認用（?nolog）で開いた時は、レポートへのリンクにも ?nolog を付ける（開封に数えない）
+if(NOLOG)qa('a[data-keepnolog]').forEach(a=>{a.href+=(a.href.includes('?')?'&':'?')+'nolog'});
 draw();
 })();
 </script>
