@@ -354,7 +354,7 @@ PRICE_MAIN = ("制作代金 買い切り", "110,000円（税込）")
 PRICE_PLANS = [
     ("年額", "5,500円（税込）", ["顧客分析なし", "サイトの修正は年1回"]),
     ("月額", "5,500円（税込）", ["顧客分析あり", "毎月1回のレポート", "修正は月5回まで（6回目から1回2,200円）"]),
-    ("月額", "33,000円（税込）", ["顧客分析", "集客コンサル"]),
+    ("月額", "33,000円（税込）", ["顧客分析", "毎日・毎週・毎月のレポート", "修正は無制限", "集客コンサル（月1回30分の Zoom あり）"]),
 ]
 BANNER_CSS = (".contact{max-width:960px;margin:8px auto 16px;padding:0 16px}"
               ".contact .in{background:linear-gradient(135deg,var(--c),color-mix(in srgb,var(--c) 70%,#000));color:#fff;border-radius:18px;padding:22px 18px;text-align:center;box-shadow:0 6px 18px rgba(0,0,0,.12)}"
