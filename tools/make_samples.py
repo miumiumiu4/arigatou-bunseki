@@ -421,17 +421,18 @@ def contact_banner(shop_plain, slug, to_report=False):
             '</div></section>')
 
 
-PHOTO_COL = "写真（オーナー提供のURL・最大3つを「、」でつなぐ）"  # 候補シートの68列目
+PHOTO_COL = "写真（オーナー提供のURL・最大3つを「、」でつなぐ）"  # 候補シートの68列目（見出しの文字はシートのまま。読むのは最大 PHOTO_MAX 枚）
+PHOTO_MAX = 5
 PHOTO_FRAME = '<div class="photo" role="img" aria-label="写真の枠"><span>お店の写真に差し替えます</span></div>'
 
 
 def photo_urls(text):
-    """「、」区切りの URL を最大3つ。https の URL（確認用に data:image/ も）だけを通す。"""
+    """「、」区切りの URL を最大 PHOTO_MAX 個。https の URL（確認用に data:image/ も）だけを通す。"""
     out = []
     for u in re.split(r"[、\s]+", (text or "").strip()):
         if re.match(r"^(https://[^\s\"'<>]+|data:image/[a-z+]+;[^\s\"'<>]+)$", u) and u not in out:
             out.append(u)
-    return out[:3]
+    return out[:PHOTO_MAX]
 
 
 def photo_credit(row):
@@ -441,17 +442,26 @@ def photo_credit(row):
 
 
 def photo_block(urls, credit=""):
-    """1枚目を上の大きな枠に、2〜3枚目を小さく横に。src は URL を参照するだけ（保存・複製しない）。"""
+    """0枚：灰色の枠／1枚：大きな枠／2枚以上：横スワイプのスライド（点・5秒ごとの自動送り・PCは左右の矢印）。
+    src は URL を参照するだけ（保存・複製しない）。動きは yoyaku_template.html の [data-slider] の JS。"""
     if not urls:
         return PHOTO_FRAME
     back = "this.parentNode.classList.remove('has');this.remove()"
-    img = lambda u, a, extra="": (f'<img src="{html.escape(u, quote=True)}" alt="{a}" loading="lazy" decoding="async" '
-                                  f'referrerpolicy="no-referrer"{extra}>')
-    main = (f'<div class="photo has" role="img" aria-label="お店の写真"><span>お店の写真に差し替えます</span>'
-            + img(urls[0], "お店の写真", f' onerror="{back}"') + "</div>")
-    thumbs = "".join(img(u, f"お店の写真{i + 2}", ' onerror="this.remove()"') for i, u in enumerate(urls[1:]))
+    img = lambda u, a: (f'<img src="{html.escape(u, quote=True)}" alt="{a}" loading="lazy" decoding="async" '
+                        f'referrerpolicy="no-referrer" onerror="{back}">')
+    slide = lambda u, a, extra="": (f'<div class="photo has"{extra}><span>お店の写真に差し替えます</span>{img(u, a)}</div>')
     note = "写真：お店が公開している物を参照しています。不要ならすぐ消します" + (f"（提供：{html.escape(credit)}）" if credit else "")
-    return main + f'<div class="thumbs">{thumbs}</div><p class="credit">{note}</p>'
+    credit_p = f'<p class="credit">{note}</p>'
+    if len(urls) == 1:
+        return slide(urls[0], "お店の写真", ' role="img" aria-label="お店の写真"') + credit_p
+    n = len(urls)
+    slides = "".join(slide(u, f"お店の写真 {i + 1}/{n}") for i, u in enumerate(urls))
+    dots = "".join(f'<button type="button" aria-label="{i + 1}枚目"></button>' for i in range(n))
+    return ('<div class="slider" data-slider aria-roledescription="スライド" aria-label="お店の写真">'
+            f'<div class="track" tabindex="0">{slides}</div>'
+            '<button type="button" class="arw prev" aria-label="前の写真">‹</button>'
+            '<button type="button" class="arw next" aria-label="次の写真">›</button>'
+            f'</div><div class="dots">{dots}</div>' + credit_p)
 
 
 def make_report_v2(row, slug, color):
@@ -634,7 +644,7 @@ def main():
     ap.add_argument("--color", default="#13294b", help="--yoyaku のテーマ色（候補シートに「テーマ色」列があればそちらが先）")
     ap.add_argument("--mode", choices=["menu", "consult", "visit"], help="--yoyaku の1段目を業種によらず固定する（省くと業種から決める）")
     ap.add_argument("--photos", action="append", default=[], metavar="番号=URL、URL",
-                    help="--yoyaku の写真を店ごとに指定（くり返し可。最大3つを「、」でつなぐ）。一覧.csv の「写真」列・候補シートの68列目より先。"
+                    help="--yoyaku の写真を店ごとに指定（くり返し可。最大5つを「、」でつなぐ）。一覧.csv の「写真」列・候補シートの68列目より先。"
                          "空（番号=）にすると写真を外す")
     ap.add_argument("--only", help="作る店の番号（カンマ区切り）。省くと条件に合う全部の店")
     a = ap.parse_args()

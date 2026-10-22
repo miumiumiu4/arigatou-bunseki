@@ -26,9 +26,18 @@
   .photo{position:relative;overflow:hidden}
   .photo img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
   .photo.has span{display:none}
-  .thumbs{display:flex;gap:6px;padding:6px 6px 0}
-  .thumbs:empty{display:none}
-  .thumbs img{flex:0 1 31%;width:31%;aspect-ratio:4/3;object-fit:cover;border-radius:8px;background:#e3e7ec;display:block}
+  /* 写真が2枚以上の時のスライド（CSS scroll-snap ＋ 下の [data-slider] の JS） */
+  .slider{position:relative}
+  .slider .track{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;overscroll-behavior-x:contain;outline:none}
+  .slider .track::-webkit-scrollbar{display:none}
+  .slider .photo{flex:0 0 100%;scroll-snap-align:start;scroll-snap-stop:always}
+  .arw{position:absolute;top:50%;transform:translateY(-50%);width:36px;height:36px;border:0;border-radius:50%;background:rgba(255,255,255,.85);color:#1d2733;font-size:24px;line-height:1;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;padding:0 0 3px}
+  .arw.prev{left:8px}.arw.next{right:8px}
+  @media (hover:none){.arw{display:none}}
+  .dots{display:flex;justify-content:center;gap:2px;padding:4px 0 0}
+  .dots button{width:22px;height:22px;border:0;background:none;padding:0;cursor:pointer;display:flex;align-items:center;justify-content:center}
+  .dots button::before{content:"";width:8px;height:8px;border-radius:50%;background:#c4ccd6}
+  .dots button[aria-current="true"]::before{background:var(--c)}
   .credit{font-size:11.5px;color:var(--muted);line-height:1.5;margin:6px 16px 0}
   .shop .in{padding:14px 16px 16px}
   .shop h1{font-size:20px;line-height:1.4;margin:0 0 6px;color:var(--c)}
@@ -340,6 +349,24 @@ addEventListener('pageshow',()=>{const b=q('#send');b.disabled=false;b.textConte
 // 確認用（?nolog）で開いた時は、レポートへのリンクにも ?nolog を付ける（開封に数えない）
 if(NOLOG)qa('a[data-keepnolog]').forEach(a=>{a.href+=(a.href.includes('?')?'&':'?')+'nolog'});
 draw();
+})();
+// 写真のスライド：横スワイプ（scroll-snap）・点・5秒ごとの自動送り（触ったら止まる）・PC は左右の矢印
+(function(){
+  const box=document.querySelector('[data-slider]');if(!box)return;
+  const t=box.querySelector('.track'),n=t.children.length,ds=[...box.nextElementSibling.querySelectorAll('button')];
+  let i=0,timer=null;
+  const mark=()=>{i=Math.round(t.scrollLeft/t.clientWidth);ds.forEach((d,j)=>d.setAttribute('aria-current',j===i))};
+  const go=k=>{i=(k+n)%n;t.scrollTo({left:i*t.clientWidth,behavior:'smooth'});ds.forEach((d,j)=>d.setAttribute('aria-current',j===i))};
+  const stop=()=>{clearInterval(timer);timer=null};
+  let w;t.addEventListener('scroll',()=>{clearTimeout(w);w=setTimeout(mark,80)},{passive:true});
+  ['pointerdown','touchstart','wheel','keydown','focusin'].forEach(e=>box.addEventListener(e,stop,{passive:true}));
+  box.querySelector('.prev').addEventListener('click',()=>go(i-1));
+  box.querySelector('.next').addEventListener('click',()=>go(i+1));
+  ds.forEach((d,j)=>d.addEventListener('click',()=>{stop();go(j)}));
+  t.addEventListener('keydown',e=>{if(e.key==='ArrowLeft'){e.preventDefault();go(i-1)}if(e.key==='ArrowRight'){e.preventDefault();go(i+1)}});
+  addEventListener('resize',()=>t.scrollTo({left:i*t.clientWidth}));
+  mark();
+  if(!matchMedia('(prefers-reduced-motion: reduce)').matches)timer=setInterval(()=>{if(!document.hidden)go(i+1)},5000);
 })();
 </script>
 <script src="../../beacon.js" data-shop="4aqj4zbu" data-page="yoyaku"></script>
