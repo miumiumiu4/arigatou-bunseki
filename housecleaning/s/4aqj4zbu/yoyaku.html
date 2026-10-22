@@ -75,7 +75,12 @@
   table.sum{width:100%;border-collapse:collapse;font-size:14.5px;margin-top:8px}
   table.sum th{text-align:left;width:7.5em;white-space:nowrap;color:var(--muted);font-weight:400;vertical-align:top;padding:7px 8px 7px 0;border-top:1px solid #eef0f3}
   table.sum td{padding:7px 0;border-top:1px solid #eef0f3;word-break:break-all}
-  .sent{display:none;background:#eaf6ee;border-radius:10px;padding:14px;margin-top:14px;font-size:15px}
+  .toreport{background:#eaf6ee;border:2px solid #7cc496;border-radius:14px;padding:16px;margin-top:16px;text-align:center}
+  .toreport b{display:block;font-size:17px;color:#1d5a35;line-height:1.5}
+  .toreport small{display:block;font-size:13px;color:#3b6a4c;margin-top:4px;line-height:1.6}
+  .btn.big{display:block;width:100%;margin-top:12px;padding:18px 12px;font-size:18px;border-radius:14px;box-shadow:0 3px 0 rgba(0,0,0,.12)}
+  .btns.back{margin-top:10px}
+  .btns.back .btn.sub{flex:1}
   .bar{position:fixed;left:0;right:0;bottom:0;z-index:20;background:#fff;border-top:1px solid var(--line);box-shadow:0 -4px 14px rgba(0,0,0,.06);padding:10px 16px;padding-bottom:max(10px,env(safe-area-inset-bottom))}
   .bar .w{max-width:640px;margin:0 auto;display:flex;align-items:center;gap:12px}
   .bar .s{flex:1;line-height:1.25}
@@ -92,8 +97,9 @@
   footer .who b{color:var(--text)}
   .stop{display:block;width:100%;margin-top:12px;padding:12px;border:1.5px solid #9aa4b0;border-radius:999px;background:#fff;color:#3d4652;font-size:15px;text-align:center;text-decoration:none;font-weight:700}
   .copy{text-align:center;margin-top:16px;font-size:12px}
-  #mita{margin-left:16px!important;margin-right:16px!important}
-  @media (min-width:700px){#mita{margin-left:auto!important;margin-right:auto!important;max-width:608px!important}.photo{height:220px}}
+  .contact{max-width:960px;margin:8px auto 16px;padding:0 16px}.contact .in{background:linear-gradient(135deg,var(--c),color-mix(in srgb,var(--c) 70%,#000));color:#fff;border-radius:18px;padding:22px 18px;text-align:center;box-shadow:0 6px 18px rgba(0,0,0,.12)}.contact h2{color:#fff;font-size:20px;line-height:1.5;margin:0 0 4px}.contact p{margin:0 0 14px;font-size:13.5px;opacity:.9}.contact .row{display:flex;gap:10px;flex-wrap:wrap}.contact a.cb{flex:1 1 220px;display:flex;align-items:center;justify-content:center;gap:8px;min-height:64px;border-radius:14px;text-decoration:none;font-weight:700;font-size:19px;padding:12px 14px}.contact a.tel{background:#fff;color:var(--c)}.contact a.mail{background:#f2a516;color:#3b2600}.contact small{display:block;margin-top:10px;font-size:12px;opacity:.85}
+  .contact{max-width:640px}
+  @media (min-width:700px){.photo{height:220px}}
 </style>
 </head>
 <body>
@@ -160,9 +166,13 @@
     <h2>ご予約内容の確認</h2>
     <p class="lead">まだ予約は確定していません。送ったあと、お店から日時を確かめるご連絡をします。</p>
     <table class="sum" id="sum"></table>
+    <div class="toreport">
+      <b>送るとレポートが見られるページに飛びます</b>
+      <small>見本では、送った予約が店主の見るレポートでどう分析されるかを、そのままご覧いただけます。</small>
+      <button type="button" class="btn go big" id="send">この内容で予約する →</button>
+    </div>
     <div class="err" id="e3"></div>
-    <div class="btns" id="sendBtns"><button type="button" class="btn sub" data-go="2">戻る</button><button type="button" class="btn go" id="send">この内容で送る</button></div>
-    <div class="sent" id="sent"></div>
+    <div class="btns back"><button type="button" class="btn sub" data-go="2">戻って直す</button></div>
   </section>
 
   <section class="phone">
@@ -171,6 +181,8 @@
     <small>（お店の営業日時を入れます）</small>
   </section>
 </main>
+
+<section class="contact" aria-label="お問い合わせ"><div class="in"><h2>気になった方は、電話かメールでご連絡ください</h2><p>この見本の仕組みについて、三浦がご説明します。</p><div class="row"><a class="cb tel" href="tel:00000000000">📞 電話する</a><a class="cb mail" href="mailto:miura1@bunseki.arigatouosouji.com?subject=%E8%A6%8B%E6%9C%AC%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6%EF%BC%88%E3%82%A8%E3%82%A2%E3%82%B3%E3%83%B3%E3%82%AF%E3%83%AA%E3%83%BC%E3%83%8B%E3%83%B3%E3%82%B0%E3%82%A4%E3%83%81%E3%83%AD%E3%83%BC%E3%83%BB%E5%90%88%E8%A8%80%E8%91%89%204aqj4zbu%EF%BC%89&amp;body=%E8%A6%8B%E6%9C%AC%E3%82%92%E8%A6%8B%E3%81%BE%E3%81%97%E3%81%9F%E3%80%82%0A%E5%BA%97%E5%90%8D%EF%BC%9A%E3%82%A8%E3%82%A2%E3%82%B3%E3%83%B3%E3%82%AF%E3%83%AA%E3%83%BC%E3%83%8B%E3%83%B3%E3%82%B0%E3%82%A4%E3%83%81%E3%83%AD%E3%83%BC%0A%E5%90%88%E8%A8%80%E8%91%89%EF%BC%9A4aqj4zbu%0A%0A%EF%BC%88%E8%81%9E%E3%81%8D%E3%81%9F%E3%81%84%E3%81%93%E3%81%A8%E3%82%92%E3%81%8A%E6%9B%B8%E3%81%8D%E3%81%8F%E3%81%A0%E3%81%95%E3%81%84%EF%BC%89">✉ メールで聞く</a></div><small>電話番号は準備中のため仮の番号です。メールでお問い合わせください。</small></div></section>
 
 <div class="bar" id="bar"><div class="w">
   <div class="s"><small id="barlabel">合計（税込）</small><b id="total">¥0</b><em id="est"></em></div>
@@ -302,24 +314,23 @@ qa('[data-go]').forEach(b=>b.addEventListener('click',()=>go(+b.dataset.go)));
 const tm=new Date(Date.now()+864e5),iso=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 ['d1','d2'].forEach(id=>q('#'+id).min=iso(tm));
 
-// 送信：見本のあいだは「見ました」フォームと同じ受け口（beacon.js の GAS）へ「見本から送信テスト」として送る。
+// 送信：見本のあいだは beacon.js の GAS の受け口へ「見本から送信テスト」として送り（?nolog なら送らない）、レポートのページへ移る。
 q('#send').addEventListener('click',()=>{
-  const out=q('#sent'),err=q('#e3'),b=q('#send');
-  const done=msg=>{q('#sendBtns').style.display='none';out.style.display='block';out.textContent=msg};
-  if(NOLOG){done('確認用のURL（?nolog）なので、送っていません。本物のページでは、ここでお店に予約が届きます。');return}
-  if(!window.ARIGATOU_GAS){done('見本のため送信されません。本物のページでは、ここでお店に予約が届きます。');return}
+  const b=q('#send'),err=q('#e3');
+  const next=()=>{location.href='report.html?from=yoyaku'+(NOLOG?'&nolog':'')};
+  b.disabled=true;b.textContent='送っています…';err.textContent='';
+  if(NOLOG||!window.ARIGATOU_GAS){next();return}
   const c=chosen(),t=calc();
   const body=new URLSearchParams({kind:'mita',s:SLUG,page:'yoyaku',in:'見本から送信テスト',n:'',
     q:(c.map(i=>i.name+(MODE==='menu'?'×'+i.n:'')).join('、')+(MODE==='menu'?' '+yen(t.s):'')).slice(0,80),c:(val('ml')||val('ph')).slice(0,80)});
-  b.disabled=true;err.textContent='';
-  fetch(window.ARIGATOU_GAS,{method:'POST',mode:'no-cors',body}).then(()=>{
-    done('送りました（見本からの送信テストです。お客さまには届きません）。本物のページでは、ここでお店に予約が届き、お店からお客さまへ確認のご連絡をします。');
-  }).catch(()=>{b.disabled=false;err.textContent='送れませんでした。見本のため、このままでもかまいません。'});
+  let gone=false;const once=()=>{if(!gone){gone=true;next()}};
+  setTimeout(once,2500);
+  fetch(window.ARIGATOU_GAS,{method:'POST',mode:'no-cors',body,keepalive:true}).then(once,once);
 });
+addEventListener('pageshow',()=>{const b=q('#send');b.disabled=false;b.textContent='この内容で予約する →'});
 draw();
 })();
 </script>
 <script src="../../beacon.js" data-shop="4aqj4zbu" data-page="yoyaku"></script>
-<script src="../../mita.js" data-shop="4aqj4zbu" data-page="yoyaku"></script>
 </body>
 </html>

@@ -6,7 +6,8 @@
       --manifest 一覧.csv --drafts 下書き.csv [--senders a@x,b@x,...] [--per-day 30]
   python3 tools/make_samples.py --manifest 一覧.csv --remove 12   # 「不要」の店のページを消す
   python3 tools/make_samples.py --yoyaku --candidates 候補.csv [--prices 価格.csv] --manifest 一覧.csv
-      # SMS 用：booking.html の代わりに参考サイトの形の yoyaku.html（4段の予約ページ）を作る
+      # SMS 用：booking.html の代わりに参考サイトの形の yoyaku.html（4段の予約ページ）と report.html（report_template.html）を作る
+      # 予約ページの「確認」で送ると report.html?from=yoyaku に移る。下に電話／メールのバナー（「見ました」フォームは出さない）
 
 決まり：
   - 使うのは店名・★・口コミ件数・業種・地域・公表しているサービスと料金だけ。口コミの文章と写真は使わない。
@@ -342,6 +343,58 @@ def display_name(raw):
     return s or raw
 
 
+# 見本を見た店主様からのご連絡の窓口（予約ページとレポートの下のバナー）。電話番号は三浦さんが決めるまで仮。
+CONTACT_TEL = "000-0000-0000"
+CONTACT_TEL_IS_TEMP = True
+CONTACT_MAIL = "miura1@bunseki.arigatouosouji.com"
+# 「データはこう溜まる」の見本シート（Google スプレッドシート・仮の数字・個人情報なし）
+SHEET_URL = "https://docs.google.com/spreadsheets/d/1xQEPbSlHTzcW1Qk8cYtnBVcrsGGqtrT8bCxr3Z2tm28/edit?usp=sharing"
+BANNER_CSS = (".contact{max-width:960px;margin:8px auto 16px;padding:0 16px}"
+              ".contact .in{background:linear-gradient(135deg,var(--c),color-mix(in srgb,var(--c) 70%,#000));color:#fff;border-radius:18px;padding:22px 18px;text-align:center;box-shadow:0 6px 18px rgba(0,0,0,.12)}"
+              ".contact h2{color:#fff;font-size:20px;line-height:1.5;margin:0 0 4px}"
+              ".contact p{margin:0 0 14px;font-size:13.5px;opacity:.9}"
+              ".contact .row{display:flex;gap:10px;flex-wrap:wrap}"
+              ".contact a.cb{flex:1 1 220px;display:flex;align-items:center;justify-content:center;gap:8px;min-height:64px;border-radius:14px;"
+              "text-decoration:none;font-weight:700;font-size:19px;padding:12px 14px}"
+              ".contact a.tel{background:#fff;color:var(--c)}"
+              ".contact a.mail{background:#f2a516;color:#3b2600}"
+              ".contact small{display:block;margin-top:10px;font-size:12px;opacity:.85}")
+
+
+def contact_banner(shop_plain, slug):
+    from urllib.parse import quote
+    tel_raw = re.sub(r"[^0-9+]", "", CONTACT_TEL)
+    subj = quote(f"見本について（{shop_plain}・合言葉 {slug}）")
+    body = quote(f"見本を見ました。\n店名：{shop_plain}\n合言葉：{slug}\n\n（聞きたいことをお書きください）")
+    note = "<small>電話番号は準備中のため仮の番号です。メールでお問い合わせください。</small>" if CONTACT_TEL_IS_TEMP else ""
+    return (f'<section class="contact" aria-label="お問い合わせ"><div class="in">'
+            f'<h2>気になった方は、電話かメールでご連絡ください</h2>'
+            f'<p>この見本の仕組みについて、三浦がご説明します。</p>'
+            f'<div class="row"><a class="cb tel" href="tel:{tel_raw}">📞 電話する</a>'
+            f'<a class="cb mail" href="mailto:{CONTACT_MAIL}?subject={subj}&amp;body={body}">✉ メールで聞く</a></div>'
+            f'{note}</div></section>')
+
+
+def make_report_v2(row, slug, color):
+    """SMS 用のレポート（housecleaning/report_template.html）。中身は 9/24〜30 の配信の分析（表示は仮の数字）。店名だけ差し込む。"""
+    from urllib.parse import quote
+    s = open(os.path.join(DEMO, "report_template.html"), encoding="utf-8").read()
+    plain = display_name(row["店名"].strip())
+    fill = {
+        "COLOR": color, "SHOP": html.escape(plain), "SHEET_URL": html.escape(SHEET_URL),
+        "BANNER_CSS": BANNER_CSS, "BANNER": contact_banner(plain, slug),
+        "STOP_SUBJECT": quote(f"不要（合言葉 {slug}）"),
+        "STOP_BODY": quote(f"今後のご案内は不要です。\n返事：不要\n合言葉：{slug}\n（このまま送ってください）"),
+        "SCRIPTS": f'<script src="../../beacon.js" data-shop="{slug}" data-page="report"></script>',
+    }
+    for k, v in fill.items():
+        s = s.replace("{{" + k + "}}", v)
+    left = re.findall(r"\{\{[A-Z_0-9]+\}\}", s)
+    if left:
+        raise SystemExit(f"差し込み残り：{left}")
+    return s
+
+
 def make_yoyaku(row, prices, slug, color, mode=None):
     s = open(os.path.join(DEMO, "yoyaku_template.html"), encoding="utf-8").read()
     no = row.get("番号", "").strip()
@@ -386,8 +439,8 @@ def make_yoyaku(row, prices, slug, color, mode=None):
         "PAGE_JSON": js, "SLUG": slug,
         "STOP_SUBJECT": quote(f"不要（合言葉 {slug}）"),
         "STOP_BODY": quote(f"今後のご案内は不要です。\n返事：不要\n合言葉：{slug}\n（このまま送ってください）"),
-        "SCRIPTS": (f'<script src="../../beacon.js" data-shop="{slug}" data-page="yoyaku"></script>\n'
-                    f'<script src="../../mita.js" data-shop="{slug}" data-page="yoyaku"></script>'),
+        "BANNER_CSS": BANNER_CSS, "BANNER": contact_banner(display_name(row["店名"].strip()), slug),
+        "SCRIPTS": f'<script src="../../beacon.js" data-shop="{slug}" data-page="yoyaku"></script>',
     }
     for k, v in fill.items():
         s = s.replace("{{" + k + "}}", v)
@@ -546,8 +599,7 @@ def main():
             color = row.get("テーマ色", "").strip()
             color = color if re.fullmatch(r"#[0-9a-fA-F]{6}", color) else a.color
             open(os.path.join(d, "yoyaku.html"), "w", encoding="utf-8").write(make_yoyaku(row, prices, slug, color, a.mode))
-            open(os.path.join(d, "report.html"), "w", encoding="utf-8").write(
-                make_report(row, menu_for(row, shop_prices(prices, no)), slug, is_aircon_only(row)))
+            open(os.path.join(d, "report.html"), "w", encoding="utf-8").write(make_report_v2(row, slug, color))
             m["予約フォームのURL"] = BASE_URL + slug + "/yoyaku.html"
             m["レポートのURL"] = BASE_URL + slug + "/report.html"
             m["送り方"] = "SMS"

@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="{{COLOR}}">
+<title>{{SHOP}}様の予約レポート（見本）</title>
+<style>
+  :root{--c:{{COLOR}};--soft:color-mix(in srgb,var(--c) 7%,#fff);--bar:color-mix(in srgb,var(--c) 30%,#fff);--hi:#e08a00;
+    --bg:#f4f6f8;--panel:#fff;--ink:#1c2430;--ink-2:#4f5b69;--ink-3:#7a8592;--rule:#dfe4ea;
+    --crit:#b42318;--crit-bg:#fde8e6;--warn:#8a5a00;--warn-bg:#fdf0d5;--ok:#256c45;--ok-bg:#e1f2e7}
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:"Hiragino Kaku Gothic ProN","Noto Sans JP","Yu Gothic",Meiryo,sans-serif;font-size:15px;line-height:1.7}
+  a{color:var(--c)}
+  .sample{background:#fff3cd;color:#5c4300;font-size:13px;line-height:1.5;text-align:center;padding:8px 16px;border-bottom:1px solid #f0d58a;font-weight:700}
+  .wrap{max-width:960px;margin:0 auto;padding:16px 16px 40px;display:grid;gap:28px}
+  .thanks{display:none;background:#eaf6ee;border:2px solid #7cc496;border-radius:14px;padding:14px 16px;font-size:16px;font-weight:700;color:#1d5a35}
+  .thanks small{display:block;font-weight:400;font-size:13px;color:#3b6a4c;margin-top:2px}
+  body.from-yoyaku .thanks{display:block}
+  header{display:grid;gap:4px}
+  .eyebrow{font-size:12px;letter-spacing:.1em;color:var(--c);font-weight:700}
+  h1{font-size:24px;line-height:1.4;margin:0}
+  h2{font-size:19px;margin:0}
+  h3{font-size:15px;margin:0;line-height:1.5}
+  .muted{color:var(--ink-2);font-size:13px;margin:0}
+  section{display:grid;gap:12px;min-width:0}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+  .kpi{background:var(--panel);border:1px solid var(--rule);border-radius:12px;padding:12px 14px;min-width:0}
+  .kpi .l{font-size:12px;color:var(--ink-2)}
+  .kpi .v{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.35;color:var(--ink)}
+  .kpi .s{font-size:12px;color:var(--ink-3)}
+  .kpi.red{border-color:#f3b8b1}.kpi.red .v{color:var(--crit)}
+  .kari{font-size:11px;color:var(--ink-3);margin-left:4px;font-weight:400}
+  .issue{background:var(--panel);border:1px solid var(--rule);border-radius:12px;padding:14px 16px;display:grid;grid-template-columns:5.6em 1fr;gap:4px 14px}
+  .chip{justify-self:start;font-size:12px;font-weight:700;padding:2px 10px;border-radius:999px;white-space:nowrap;height:fit-content;margin-top:2px}
+  .crit{background:var(--crit-bg);color:var(--crit)}.warn{background:var(--warn-bg);color:var(--warn)}.ok{background:var(--ok-bg);color:var(--ok)}
+  .issue dl{margin:6px 0 0;display:grid;grid-template-columns:7.5em 1fr;gap:4px 10px;font-size:14px}
+  .issue dt{color:var(--ink-3);font-size:12.5px;padding-top:2px}
+  .issue dd{margin:0}
+  .issue dd.next b{color:var(--c)}
+  .money{display:inline-block;font-size:12.5px;background:var(--soft);color:var(--c);border-radius:6px;padding:2px 8px;margin-top:4px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
+  .card{background:var(--panel);border:1px solid var(--rule);border-radius:12px;padding:14px 16px;display:grid;gap:6px;min-width:0}
+  .card.wide{grid-column:1/-1}
+  .chart{width:100%;min-width:0}
+  .chart svg{display:block;width:100%;height:auto;overflow:visible}
+  .chart text{font-family:inherit;fill:var(--ink-2)}
+  .chart .val{fill:var(--ink);font-weight:700}
+  .chart rect.b{fill:var(--bar)}.chart rect.b.hi{fill:var(--c)}
+  .chart rect.b:hover{fill:var(--hi)}
+  .note{font-size:13px;color:var(--ink-2);margin:0}
+  .sheet{background:var(--panel);border:2px solid var(--c);border-radius:14px;padding:16px;display:grid;gap:8px}
+  .sheet .cols{font-size:12.5px;color:var(--ink-2);background:var(--soft);border-radius:8px;padding:8px 10px;line-height:1.6}
+  .sheet a.go{display:block;text-align:center;background:var(--c);color:#fff;text-decoration:none;font-weight:700;font-size:16px;border-radius:14px;padding:14px 16px;line-height:1.5}
+  .tabs{display:flex;flex-wrap:wrap;gap:6px}
+  .tabs button{font:inherit;font-size:13.5px;border:1px solid var(--rule);background:var(--panel);padding:6px 12px;border-radius:999px;cursor:pointer;color:var(--ink)}
+  .tabs button[aria-selected=true]{background:var(--c);color:#fff;border-color:var(--c)}
+  .mail{background:var(--panel);border:1px solid var(--rule);border-radius:12px;padding:14px 16px;display:grid;gap:6px;min-width:0}
+  .mail pre{margin:0;white-space:pre-wrap;word-break:break-word;font-family:inherit;font-size:14px;background:var(--bg);border-radius:8px;padding:12px 14px;max-height:460px;overflow:auto}
+  {{BANNER_CSS}}
+  footer{max-width:960px;margin:0 auto;padding:0 16px 48px;font-size:13px;color:var(--ink-2)}
+  footer .who{background:#fff;border:1px solid var(--rule);border-radius:12px;padding:14px 16px;line-height:1.8}
+  footer .who b{color:var(--ink)}
+  .stop{display:block;width:100%;margin-top:12px;padding:12px;border:1.5px solid #9aa4b0;border-radius:999px;background:#fff;color:#3d4652;font-size:15px;text-align:center;text-decoration:none;font-weight:700}
+  @media(max-width:560px){h1{font-size:20px}.issue{grid-template-columns:1fr}.issue dl{grid-template-columns:1fr;gap:0}.issue dt{padding-top:6px}.kpi .v{font-size:19px}}
+</style>
+</head>
+<body>
+<div class="sample">これは見本です。数字はすべて仮の数字です。写真は仮の物です。</div>
+<div class="wrap">
+
+<div class="thanks" id="thanks">ご予約ありがとうございます。店主にはこのようなレポートが届きます<small>見本からの送信です。実際のご予約にはなっていません。</small></div>
+
+<header>
+  <div class="eyebrow">予約レポート（見本）</div>
+  <h1>{{SHOP}}様の予約レポート（見本）</h1>
+  <p class="muted">集計：9月24日〜30日のメール配信のあと、10月20日までに受け付けた予約（テスト送信を除く）。予約ページから届いた内容を、毎朝計算し直す形の見本です。</p>
+  <p class="muted"><b>数字はすべて仮の数字です。</b>{{SHOP}}様の実際の数字ではありません。</p>
+</header>
+
+<section aria-label="要約">
+  <div class="kpis">
+    <div class="kpi"><div class="l">予約件数<span class="kari">仮</span></div><div class="v">700件</div><div class="s">うち配信の7日間で 667件</div></div>
+    <div class="kpi"><div class="l">台数<span class="kari">仮</span></div><div class="v">1,447台</div><div class="s">1件あたり 2.1台</div></div>
+    <div class="kpi"><div class="l">予約金額（税込）<span class="kari">仮</span></div><div class="v">¥12,797,200</div><div class="s">作業前の予約を含む</div></div>
+    <div class="kpi"><div class="l">1件あたり<span class="kari">仮</span></div><div class="v">¥18,282</div><div class="s">真ん中の値は ¥16,000</div></div>
+    <div class="kpi red"><div class="l">未入金<span class="kari">仮</span></div><div class="v">¥1,344,000</div><div class="s">PayPal請求書の 62件</div></div>
+  </div>
+</section>
+
+<section>
+  <h2>改善ポイント</h2>
+  <p class="muted">「事実（数字）」→「何が起きているか」→「次の一手」の順です。金額は「こうなったら」の試算で、約束ではありません。数字はすべて仮の数字です。</p>
+
+  <div class="issue"><span class="chip crit">要対応</span><div><h3>PayPal 請求書の未入金が 62件・¥1,344,000</h3><dl>
+    <dt>事実（数字）</dt><dd>PayPal 請求書を選んだ 93件のうち、入金済みは 31件。残り 62件・¥1,344,000 が未入金です。</dd>
+    <dt>何が起きているか</dt><dd>請求書を送ったあと、入金のご案内が出ていません。作業日が近い予約も含まれます。</dd>
+    <dt>次の一手</dt><dd class="next"><b>作業3日前・作業後3日・7日に入金のご案内を送る</b>（メール①）。</dd></dl></div></div>
+
+  <div class="issue"><span class="chip warn">伸びしろ</span><div><h3>土曜の午前に希望が集中</h3><dl>
+    <dt>事実（数字）</dt><dd>第1希望の曜日は土曜が 172件で一番多く（2番目の日曜は 113件）、時間帯は 9〜12時が 420件（60%）。15〜18時は 71件だけです。</dd>
+    <dt>何が起きているか</dt><dd>同じ枠に申し込みが重なり、日程の調整に手間がかかります。平日の午後は空いています。</dd>
+    <dt>次の一手</dt><dd class="next"><b>平日午後を選んだ方への特典</b>を用意し、確認のご連絡で<b>第2・第3希望の平日</b>を先にご提案。</dd></dl></div></div>
+
+  <div class="issue"><span class="chip ok">確認</span><div><h3>配信の直後に申し込みが集まる</h3><dl>
+    <dt>事実（数字）</dt><dd>受付時刻は 8時台が 118件、20時台が 77件。受付日は 9/30（305件）と 9/26（120件）の2日で全体の6割（425件）です。</dd>
+    <dt>何が起きているか</dt><dd>メールが届いた時刻の前後に申し込みが集中しています。</dd>
+    <dt>次の一手</dt><dd class="next"><b>次の配信も 8時・20時を軸に</b>。配信日の前後は電話・返信の手を空けておく。</dd></dl></div></div>
+
+  <div class="issue"><span class="chip warn">伸びしろ</span><div><h3>3点セットの装着率は 20%</h3><dl>
+    <dt>事実（数字）</dt><dd>3点セットを付けた予約は 700件のうち 138件（219台分）。お掃除機能付きは 329件です。</dd>
+    <dt>何が起きているか</dt><dd>予約のときに見落とされている可能性があります。追加のご案内はまだ出ていません。</dd>
+    <dt>次の一手</dt><dd class="next"><b>確認メールで 3点セットを追加でご案内</b>（メール②）。</dd></dl>
+    <span class="money">試算：予約の1割（70件）が1台分付けると 70件 × ¥7,000 ＝ 約49万円</span></div></div>
+
+  <div class="issue"><span class="chip warn">伸びしろ</span><div><h3>戸建ては1件あたり 1.4倍</h3><dl>
+    <dt>事実（数字）</dt><dd>戸建て 343件は1件 ¥21,348・2.4台、マンション・アパート 351件は1件 ¥15,233・1.7台。</dd>
+    <dt>何が起きているか</dt><dd>戸建ては部屋数が多く、まとめて頼む方が多い層です。</dd>
+    <dt>次の一手</dt><dd class="next"><b>戸建ての方へは「全部屋まとめて」のご案内</b>。住居タイプを予約で聞いているので分けて送れます。</dd></dl></div></div>
+
+  <div class="issue"><span class="chip warn">伸びしろ</span><div><h3>エアコン以外の相談が 101件</h3><dl>
+    <dt>事実（数字）</dt><dd>お風呂・浴室 51件、洗濯機 32件、キッチン・水回り 21件、その他 22件（重なりあり）。</dd>
+    <dt>何が起きているか</dt><dd>エアコンのついでに頼みたい所があるのに、お返事が出ていません。</dd>
+    <dt>次の一手</dt><dd class="next"><b>相談のあった方へ水回りのご案内</b>（メール③）。同じ日の訪問なら移動は1回です。</dd></dl></div></div>
+</section>
+
+<section>
+  <h2>グラフ</h2>
+  <p class="muted">数字はすべて仮の数字です。棒に指を置く（マウスを重ねる）と件数が出ます。</p>
+  <div class="grid">
+    <div class="card wide"><h3>受付日ごとの件数</h3><div class="chart" id="g-daily"></div><p class="note">9/30 と 9/26 の2日で全体の6割。</p></div>
+    <div class="card wide"><h3>受付の時間帯（時台ごとの件数）</h3><div class="chart" id="g-hour"></div><p class="note">8時台 118件・20時台 77件。配信の時刻に重なります。</p></div>
+    <div class="card"><h3>エリア別の予約金額</h3><div class="chart" id="g-area"></div><p class="note">神奈川・東京で6割。</p></div>
+    <div class="card"><h3>台数（1件あたり）</h3><div class="chart" id="g-units"></div><p class="note">2台以上が6割。</p></div>
+    <div class="card"><h3>オプション（付けた件数）</h3><div class="chart" id="g-opt"></div><p class="note">3点セットは 700件のうち 138件（20%）。</p></div>
+    <div class="card"><h3>マンションと戸建て（1件あたり金額）</h3><div class="chart" id="g-house"></div><p class="note">戸建ては 1.4倍・台数も多い。</p></div>
+    <div class="card"><h3>第1希望の曜日</h3><div class="chart" id="g-wd"></div><p class="note">土曜が一番多い。</p></div>
+    <div class="card"><h3>第1希望の時間帯</h3><div class="chart" id="g-slot"></div><p class="note">午前（9〜12時）が 60%。</p></div>
+    <div class="card"><h3>支払い方法</h3><div class="chart" id="g-pay"></div><p class="note">PayPal 請求書 93件のうち 62件が未入金。</p></div>
+    <div class="card"><h3>エアコン以外の相談</h3><div class="chart" id="g-cons"></div><p class="note">101件の方から（重なりあり）。</p></div>
+  </div>
+</section>
+
+<section>
+  <div class="sheet">
+    <h2>データはこのようにスプレッドシートに溜まります</h2>
+    <p class="muted">予約ページから送られた内容が、1件1行で溜まります。このレポートは、そこから計算しています。見本のシートは名前・住所・電話・メールをすべて仮の値にしています（個人情報は入っていません・数字はすべて仮の数字です）。</p>
+    <div class="cols">列：受付番号／受付日時／お名前／エリア／住所／電話／メール／住居タイプ／台数／お掃除機能付き台数／3点セット台数／防カビ／室外機／ドレンホース／第1希望日／第1希望時間帯／支払い方法／金額／状態／エアコン以外の相談</div>
+    <a class="go" href="{{SHEET_URL}}" target="_blank" rel="noopener">見本のスプレッドシートを開く（別のタブ）</a>
+  </div>
+</section>
+
+<section>
+  <h2>次の一手のメール文面</h2>
+  <p class="muted">｛ ｝は予約ごとに差し込みます。署名・連絡先は仮です。</p>
+  <div class="tabs" id="tabs" role="tablist"></div>
+  <div class="mail"><div class="muted" id="when"></div><b id="subj"></b><pre id="body"></pre></div>
+</section>
+
+</div>
+
+{{BANNER}}
+
+<footer>
+  <div class="who">
+    <b>この見本ページについて</b><br>
+    {{SHOP}}様にご覧いただくために作った見本です。お店の名前だけを使っています。口コミの文章と写真は使っていません。数字はすべて仮の数字です。<br>
+    作った会社：<b>エイムポイント合同会社</b><br>
+    代表：三浦公嗣<br>
+    住所：（登記上の住所を入れる）<br>
+    連絡先：<a href="mailto:miura1@bunseki.arigatouosouji.com">miura1@bunseki.arigatouosouji.com</a>
+    <a class="stop" href="mailto:miura1@bunseki.arigatouosouji.com?subject={{STOP_SUBJECT}}&amp;body={{STOP_BODY}}">今後のご案内が不要な方はこちら</a>
+  </div>
+</footer>
+
+<script>
+(function(){
+if(/[?&]from=yoyaku/.test(location.search))document.body.classList.add('from-yoyaku');
+// 数字はすべて仮の数字（ページの表示）。集計の形は 9/24〜30 のメール配信で入った予約の分析と同じ。
+const D={
+  daily:[["9/24",29],["9/25",7],["9/26",120],["9/27",101],["9/28",39],["9/29",66],["9/30",305],["10/1",4],["10/2",0],["10/3",2],["10/4",3],["10/5",0],["10/6",3],["10/7",2],["10/8",1],["10/9",1],["10/10",2],["10/11",1],["10/12",3],["10/13",1],["10/14",1],["10/15",1],["10/16",1],["10/17",1],["10/18",1],["10/19",4],["10/20",1]],
+  hour:[5,2,1,3,3,1,2,7,118,57,50,30,35,24,24,26,21,32,25,24,77,59,48,26],
+  area:[["神奈川",4620400],["東京",2867000],["愛知",1487000],["千葉",1463500],["埼玉",1402000],["大阪",503200],["その他",454100]],
+  units:[["1台",262],["2台",241],["3台",128],["4台",43],["5台以上",26]],
+  opt:[["お掃除機能付き",329],["3点セット",138],["防カビ・抗菌",68],["ドレンホース",35],["室外機",21]],
+  house:[["戸建て",21348],["マンション・アパート",15233]],
+  wd:[["月",99],["火",83],["水",88],["木",74],["金",71],["土",172],["日",113]],
+  slot:[["9〜12時",420],["12〜15時",204],["15〜18時",71]],
+  pay:[["当日払い（現金）",382],["当日払い（PayPay）",225],["PayPal請求書",93]],
+  cons:[["お風呂・浴室",51],["洗濯機",32],["その他",22],["キッチン・水回り",21]]
+};
+const NS='http://www.w3.org/2000/svg';
+const fmt=(n,u)=>u==='円'?'¥'+n.toLocaleString('ja-JP'):n.toLocaleString('ja-JP')+(u||'');
+function el(t,a,txt){const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);if(txt!=null)e.textContent=txt;return e}
+function svg(box,w,h){box.innerHTML='';const s=el('svg',{viewBox:`0 0 ${w} ${h}`,width:w,height:h,role:'img'});box.append(s);return s}
+// 縦の棒（日ごと・時間帯・曜日）。幅は箱の実寸で描き直す。
+function cols(id,rows,o){
+  const box=document.getElementById(id),W=Math.max(box.clientWidth,240),H=o.h||170,top=18,bot=22,left=4;
+  const s=svg(box,W,H),max=Math.max(...rows.map(r=>r[1])),n=rows.length,step=(W-left)/n,bw=Math.max(2,Math.min(36,step-2));
+  s.setAttribute('aria-label',o.label);
+  s.append(el('line',{x1:0,x2:W,y1:H-bot+.5,y2:H-bot+.5,stroke:'#cfd6de'}));
+  // 目盛りの文字：強調する棒は必ず、ほかは間引いて重ならない所だけ
+  const every=o.every?o.every(W):1,gap=Math.ceil(30/step),lab=rows.map((r,i)=>(o.hi||[]).includes(r[0])?i:-1).filter(i=>i>=0);
+  rows.forEach((r,i)=>{if(i%every===0&&lab.every(j=>Math.abs(i-j)>=gap))lab.push(i)});
+  rows.forEach((r,i)=>{
+    const x=left+i*step+(step-bw)/2,bh=max?Math.round((H-top-bot)*r[1]/max):0,y=H-bot-bh,hi=(o.hi||[]).includes(r[0]);
+    const b=el('rect',{class:'b'+(hi?' hi':''),x,y:bh?y:H-bot-1,width:bw,height:Math.max(bh,1),rx:Math.min(3,bw/2)});
+    b.append(el('title',{},`${r[0]}${o.xs||''}：${fmt(r[1],o.u)}`));s.append(b);
+    if(hi||r[1]===max)s.append(el('text',{class:'val',x:x+bw/2,y:y-5,'text-anchor':'middle','font-size':11.5},fmt(r[1],o.u)));
+    if(lab.includes(i))s.append(el('text',{x:x+bw/2,y:H-6,'text-anchor':'middle','font-size':10.5},r[0]));
+  });
+}
+// 横の棒（エリア・台数・オプションなど）。
+function bars(id,rows,o){
+  const box=document.getElementById(id),W=Math.max(box.clientWidth,240),rh=26,H=rows.length*rh+4;
+  const s=svg(box,W,H),max=Math.max(...rows.map(r=>r[1]));
+  s.setAttribute('aria-label',o.label);
+  // 見出しの文字を先に置いて実際の幅を測り、棒の始まりを決める
+  const labs=rows.map((r,i)=>{const t=el('text',{x:0,y:i*rh+18,'font-size':12.5},r[0]);s.append(t);return t});
+  const lw=Math.min(Math.max(...labs.map(t=>t.getBBox().width))+10,W*.5),vw=(o.u==='円'?84:52)+(o.pct?44:0),tw=Math.max(40,W-lw-vw-8);
+  rows.forEach((r,i)=>{
+    const y=i*rh+4,w=Math.max(2,Math.round(tw*r[1]/max)),hi=(o.hi||[]).includes(r[0]);
+    const b=el('rect',{class:'b'+(hi?' hi':''),x:lw,y:y+3,width:w,height:15,rx:3});
+    b.append(el('title',{},`${r[0]}：${fmt(r[1],o.u)}`));s.append(b);
+    s.append(el('text',{class:'val',x:lw+w+6,y:y+15,'font-size':12.5},fmt(r[1],o.u)+(o.pct?`（${Math.round(r[1]*100/o.pct)}%）`:'')));
+  });
+}
+function draw(){
+  cols('g-daily',D.daily,{label:'受付日ごとの件数',u:'件',hi:['9/26','9/30'],every:w=>w<520?4:2,h:180});
+  cols('g-hour',D.hour.map((v,h)=>[String(h),v]),{label:'受付の時間帯',u:'件',xs:'時台',hi:['8','20'],every:w=>w<520?3:1,h:170});
+  bars('g-area',D.area,{label:'エリア別の予約金額',u:'円',hi:['神奈川'],lw:56});
+  bars('g-units',D.units,{label:'台数',u:'件',lw:64});
+  bars('g-opt',D.opt,{label:'オプション',u:'件',hi:['3点セット'],lw:104,pct:700});
+  bars('g-house',D.house,{label:'1件あたり金額',u:'円',hi:['戸建て'],lw:116});
+  cols('g-wd',D.wd,{label:'第1希望の曜日',u:'件',hi:['土'],h:150});
+  bars('g-slot',D.slot,{label:'第1希望の時間帯',u:'件',hi:['9〜12時'],lw:70,pct:695});
+  bars('g-pay',D.pay,{label:'支払い方法',u:'件',hi:['PayPal請求書'],lw:124});
+  bars('g-cons',D.cons,{label:'エアコン以外の相談',u:'件',lw:104});
+}
+draw();let rt;addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(draw,120)});
+
+const SIG=`
+
+────────
+○○店（見本）
+電話：000-0000-0000（仮）
+メール：sample@example.com（仮）`;
+const M=[
+["① 入金のご案内","PayPal 請求書の方・作業3日前／作業後3日／作業後7日","【{作業日}】お支払いのご案内（PayPal 請求書）",
+`{お名前} 様
+
+エアコンクリーニングのご予約ありがとうございます。
+{作業日}のお伺いに向けて、お支払いのご案内をお送りします。
+
+　ご請求額：{金額}円（税込）
+　お支払い：先日お送りした PayPal の請求書から
+
+すでにお支払いいただいた場合は、行き違いですのでこのメールは破棄してください。
+請求書が見当たらない場合は、このメールにご返信ください。もう一度お送りします。`+SIG],
+["② 3点セットのご案内","確認メールに添えて・3点セットを付けていない方","{作業日}のお伺いで、3点セットも追加できます",
+`{お名前} 様
+
+ご予約ありがとうございます。{作業日}にお伺いします。
+
+同じ日のお伺いで、3点セット（オプション）を追加できます。
+　3点セット：1台 7,000円（税込）
+
+ご希望の場合は、このメールに「3点セット希望（○台）」とご返信ください。
+当日、作業の前にお申し出いただいても承ります。`+SIG],
+["③ 水回りのご案内","予約で「エアコン以外の相談」があった方","ご相談いただいた{相談の内容}について",
+`{お名前} 様
+
+ご予約のときに「{相談の内容}」についてご相談をいただき、ありがとうございます。
+
+エアコンと同じ日にお伺いできれば、移動も1回で済みます。
+料金と所要時間をご案内しますので、このメールに
+　・場所（お風呂・洗濯機・キッチンなど）
+　・気になっていること
+をご返信ください。写真を添えていただくと、より正確にお見積りできます。`+SIG],
+["④ お礼と紹介","作業の2日後","先日はありがとうございました",
+`{お名前} 様
+
+{作業日}はお時間をいただき、ありがとうございました。
+その後、エアコンの調子はいかがでしょうか。気になる所があれば、お気軽にご返信ください。
+
+ご家族やお知り合いでエアコンのお掃除をお考えの方がいらっしゃいましたら、
+このメールを転送していただくか、下のご紹介コードをお伝えください。
+
+　ご紹介コード：{紹介コード}
+
+次のお手入れの時期が近づいたら、こちらからご案内します。`+SIG]];
+const tabs=document.getElementById('tabs');
+function show(i){[...tabs.children].forEach((b,k)=>b.setAttribute('aria-selected',k===i));
+  document.getElementById('when').textContent='送る時：'+M[i][1];document.getElementById('subj').textContent='件名：'+M[i][2];document.getElementById('body').textContent=M[i][3]}
+M.forEach((m,i)=>{const b=document.createElement('button');b.type='button';b.setAttribute('role','tab');b.textContent=m[0];b.onclick=()=>show(i);tabs.append(b)});
+show(0);
+})();
+</script>
+{{SCRIPTS}}
+</body>
+</html>

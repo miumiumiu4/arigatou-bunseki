@@ -75,7 +75,12 @@
   table.sum{width:100%;border-collapse:collapse;font-size:14.5px;margin-top:8px}
   table.sum th{text-align:left;width:7.5em;white-space:nowrap;color:var(--muted);font-weight:400;vertical-align:top;padding:7px 8px 7px 0;border-top:1px solid #eef0f3}
   table.sum td{padding:7px 0;border-top:1px solid #eef0f3;word-break:break-all}
-  .sent{display:none;background:#eaf6ee;border-radius:10px;padding:14px;margin-top:14px;font-size:15px}
+  .toreport{background:#eaf6ee;border:2px solid #7cc496;border-radius:14px;padding:16px;margin-top:16px;text-align:center}
+  .toreport b{display:block;font-size:17px;color:#1d5a35;line-height:1.5}
+  .toreport small{display:block;font-size:13px;color:#3b6a4c;margin-top:4px;line-height:1.6}
+  .btn.big{display:block;width:100%;margin-top:12px;padding:18px 12px;font-size:18px;border-radius:14px;box-shadow:0 3px 0 rgba(0,0,0,.12)}
+  .btns.back{margin-top:10px}
+  .btns.back .btn.sub{flex:1}
   .bar{position:fixed;left:0;right:0;bottom:0;z-index:20;background:#fff;border-top:1px solid var(--line);box-shadow:0 -4px 14px rgba(0,0,0,.06);padding:10px 16px;padding-bottom:max(10px,env(safe-area-inset-bottom))}
   .bar .w{max-width:640px;margin:0 auto;display:flex;align-items:center;gap:12px}
   .bar .s{flex:1;line-height:1.25}
@@ -92,8 +97,9 @@
   footer .who b{color:var(--text)}
   .stop{display:block;width:100%;margin-top:12px;padding:12px;border:1.5px solid #9aa4b0;border-radius:999px;background:#fff;color:#3d4652;font-size:15px;text-align:center;text-decoration:none;font-weight:700}
   .copy{text-align:center;margin-top:16px;font-size:12px}
-  #mita{margin-left:16px!important;margin-right:16px!important}
-  @media (min-width:700px){#mita{margin-left:auto!important;margin-right:auto!important;max-width:608px!important}.photo{height:220px}}
+  {{BANNER_CSS}}
+  .contact{max-width:640px}
+  @media (min-width:700px){.photo{height:220px}}
 </style>
 </head>
 <body>
@@ -160,9 +166,13 @@
     <h2>ご予約内容の確認</h2>
     <p class="lead">まだ予約は確定していません。送ったあと、お店から日時を確かめるご連絡をします。</p>
     <table class="sum" id="sum"></table>
+    <div class="toreport">
+      <b>送るとレポートが見られるページに飛びます</b>
+      <small>見本では、送った予約が店主の見るレポートでどう分析されるかを、そのままご覧いただけます。</small>
+      <button type="button" class="btn go big" id="send">この内容で予約する →</button>
+    </div>
     <div class="err" id="e3"></div>
-    <div class="btns" id="sendBtns"><button type="button" class="btn sub" data-go="2">戻る</button><button type="button" class="btn go" id="send">この内容で送る</button></div>
-    <div class="sent" id="sent"></div>
+    <div class="btns back"><button type="button" class="btn sub" data-go="2">戻って直す</button></div>
   </section>
 
   <section class="phone">
@@ -171,6 +181,8 @@
     <small>{{HOURS}}</small>
   </section>
 </main>
+
+{{BANNER}}
 
 <div class="bar" id="bar"><div class="w">
   <div class="s"><small id="barlabel">合計（税込）</small><b id="total">¥0</b><em id="est"></em></div>
@@ -302,20 +314,20 @@ qa('[data-go]').forEach(b=>b.addEventListener('click',()=>go(+b.dataset.go)));
 const tm=new Date(Date.now()+864e5),iso=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 ['d1','d2'].forEach(id=>q('#'+id).min=iso(tm));
 
-// 送信：見本のあいだは「見ました」フォームと同じ受け口（beacon.js の GAS）へ「見本から送信テスト」として送る。
+// 送信：見本のあいだは beacon.js の GAS の受け口へ「見本から送信テスト」として送り（?nolog なら送らない）、レポートのページへ移る。
 q('#send').addEventListener('click',()=>{
-  const out=q('#sent'),err=q('#e3'),b=q('#send');
-  const done=msg=>{q('#sendBtns').style.display='none';out.style.display='block';out.textContent=msg};
-  if(NOLOG){done('確認用のURL（?nolog）なので、送っていません。本物のページでは、ここでお店に予約が届きます。');return}
-  if(!window.ARIGATOU_GAS){done('見本のため送信されません。本物のページでは、ここでお店に予約が届きます。');return}
+  const b=q('#send'),err=q('#e3');
+  const next=()=>{location.href='report.html?from=yoyaku'+(NOLOG?'&nolog':'')};
+  b.disabled=true;b.textContent='送っています…';err.textContent='';
+  if(NOLOG||!window.ARIGATOU_GAS){next();return}
   const c=chosen(),t=calc();
   const body=new URLSearchParams({kind:'mita',s:SLUG,page:'yoyaku',in:'見本から送信テスト',n:'',
     q:(c.map(i=>i.name+(MODE==='menu'?'×'+i.n:'')).join('、')+(MODE==='menu'?' '+yen(t.s):'')).slice(0,80),c:(val('ml')||val('ph')).slice(0,80)});
-  b.disabled=true;err.textContent='';
-  fetch(window.ARIGATOU_GAS,{method:'POST',mode:'no-cors',body}).then(()=>{
-    done('送りました（見本からの送信テストです。お客さまには届きません）。本物のページでは、ここでお店に予約が届き、お店からお客さまへ確認のご連絡をします。');
-  }).catch(()=>{b.disabled=false;err.textContent='送れませんでした。見本のため、このままでもかまいません。'});
+  let gone=false;const once=()=>{if(!gone){gone=true;next()}};
+  setTimeout(once,2500);
+  fetch(window.ARIGATOU_GAS,{method:'POST',mode:'no-cors',body,keepalive:true}).then(once,once);
 });
+addEventListener('pageshow',()=>{const b=q('#send');b.disabled=false;b.textContent='この内容で予約する →'});
 draw();
 })();
 </script>
