@@ -344,7 +344,8 @@ def display_name(raw):
 
 
 # 見本を見た店主様からのご連絡の窓口（予約ページとレポートの下のバナー・レポートのメール文面の署名）
-CONTACT_TEL = "070-8517-9292"
+CONTACT_TEL = "000-0000-0000"  # 仮。Google マップに載っている「ありがとうエアコンお掃除専門店」の番号が届いたら差し替え、下を False に
+CONTACT_TEL_IS_TEMP = True
 CONTACT_MAIL = "miura1@bunseki.arigatouosouji.com"
 # 両ページ下部「この見本ページについて」の会社の表示。変える時はここだけ直して作り直す。
 COMPANY_NAME = "エイムポイント合同会社"
@@ -407,6 +408,7 @@ def contact_banner(shop_plain, slug, to_report=False):
         f'<li><span class="n">{"①②③④⑤"[i]}</span><b>{html.escape(k)} {tax(v)}</b><ul>'
         + "".join(f"<li>{html.escape(x)}</li>" for x in xs) + "</ul></li>"
         for i, (k, v, xs) in enumerate(PRICE_PLANS))
+    note = "<small>電話番号は準備中のため仮の番号です。メールでお問い合わせください。</small>" if CONTACT_TEL_IS_TEMP else ""
     lead = ('<a class="toreport-link" href="report.html" data-keepnolog>'
             '<b>📊 このサイトを運用した場合の分析レポートの例を見る →</b>'
             '<span>予約がどう分析され、次の一手がどう出るかを、実際の形でご覧いただけます</span></a>') if to_report else ""
@@ -418,7 +420,7 @@ def contact_banner(shop_plain, slug, to_report=False):
             f'<p>この見本の仕組みについて、三浦がご説明します。</p>'
             f'<div class="row"><a class="cb tel" href="tel:{tel_raw}">📞 電話する</a>'
             f'<a class="cb mail" href="mailto:{CONTACT_MAIL}?subject={subj}&amp;body={body}">✉ メールで聞く</a></div>'
-            '</div></section>')
+            f'{note}</div></section>')
 
 
 PHOTO_COL = "写真（オーナー提供のURL・最大3つを「、」でつなぐ）"  # 候補シートの68列目
@@ -461,7 +463,7 @@ def make_report_v2(row, slug, color):
     plain = display_name(row["店名"].strip())
     fill = {
         "COLOR": color, "SHOP": html.escape(plain), "SHEET_URL": html.escape(SHEET_URL),
-        "BANNER_CSS": BANNER_CSS, "BANNER": contact_banner(plain, slug), "SIG_TEL": CONTACT_TEL,
+        "BANNER_CSS": BANNER_CSS, "BANNER": contact_banner(plain, slug), "SIG_TEL": CONTACT_TEL + ("（仮）" if CONTACT_TEL_IS_TEMP else ""),
         "COMPANY": company_lines(),
         "STOP_SUBJECT": quote(f"不要（合言葉 {slug}）"),
         "STOP_BODY": quote(f"今後のご案内は不要です。\n返事：不要\n合言葉：{slug}\n（このまま送ってください）"),
