@@ -279,6 +279,23 @@ SAMPLE_MENU = [  # 価格シートに行がない店の仮の料金（ページ�
     ("水回り", "サービス：洗面台", "洗面所", 8000, "1か所"),
     ("水回り", "サービス：トイレ", "トイレ", 7000, "1か所"),
 ]
+# 1段目の切り替え（業種 → mode）。他業種の中身は土台だけ（見た目の作り込みはまだ）。
+CONSULT_ITEMS = [("キッチン・水回りのリフォーム", ""), ("内装（壁紙・床）", ""), ("外壁・屋根", ""), ("増改築・間取りの変更", ""), ("修繕・その他", "")]
+VISIT_ITEMS = [("部屋を借りたい", ""), ("家・土地を買いたい", ""), ("売りたい・貸したい", ""), ("その他のご相談", "")]
+BUDGETS = ["〜50万円", "50〜100万円", "100〜300万円", "300万円〜", "まだ決めていない"]
+
+
+def page_mode(row, forced=None):
+    if forced:
+        return forced
+    k = row.get("業種", "")
+    if re.search("不動産", k):
+        return "visit"
+    if re.search("リフォーム|工務店|建築|建設|塗装|リノベ", k):
+        return "consult"
+    return "menu"
+
+
 MOBILE_COL = "携帯番号（070・080・090 で始まる物だけ）"
 
 
@@ -325,7 +342,7 @@ def display_name(raw):
     return s or raw
 
 
-def make_yoyaku(row, prices, slug, color):
+def make_yoyaku(row, prices, slug, color, mode=None):
     s = open(os.path.join(DEMO, "yoyaku_template.html"), encoding="utf-8").read()
     no = row.get("番号", "").strip()
     shop = html.escape(display_name(row["店名"].strip()))
@@ -343,17 +360,30 @@ def make_yoyaku(row, prices, slug, color):
     area = row.get("対応エリア（区名などを「、」でつなぐ）", "").strip() or (f"{city}とその周辺（お店に合わせて直します）" if city else "（お店の対応エリアを入れます）")
     hours = row.get("営業日時の特徴（年中無休・平日のみ・土日可・不明）", "").strip()
     hours = hours if hours and hours != "不明" else "（お店の営業日時を入れます）"
-    menu, real = yoyaku_menu(row, prices, no)
-    note = ("料金は" + shop + "様が公表している料金です（税込）。「〜」はその金額から、「要見積」はお見積りになります。" if real else
-            "料金はすべて仮です。" + shop + "様の料金表に合わせて直します。")
-    js = json.dumps(menu, ensure_ascii=False).replace("</", "<\\/")
+    mode = page_mode(row, mode)
+    if mode == "menu":
+        menu, real = yoyaku_menu(row, prices, no)
+        page = dict(mode="menu", step="メニュー", title="メニューを選ぶ", next="希望日を選ぶ", tabs=menu,
+                    lead="＋を押すと料金がその場で変わります。" + ("エアコンと水回りは、上のボタンで切りかえられます。" if len(menu) > 1 else ""),
+                    note=(f"料金は{display_name(row['店名'].strip())}様が公表している料金です（税込）。「〜」はその金額から、「要見積」はお見積りになります。" if real else
+                          f"料金はすべて仮です。{display_name(row['店名'].strip())}様の料金表に合わせて直します。"))
+    else:
+        names = [p.get("メニュー名（店の表記どおり・短く）", "").strip() for p in prices
+                 if p.get("店番号（候補シートの番号）", "").strip() == no] or None
+        items = [dict(name=n, price=0, kind="要見積", sub="") for n in names if n] if names else \
+            [dict(name=n, price=0, kind="要見積", sub=x) for n, x in (CONSULT_ITEMS if mode == "consult" else VISIT_ITEMS)]
+        page = (dict(mode="consult", step="ご相談", title="相談したい工事を選ぶ", next="希望日を選ぶ", budgets=BUDGETS,
+                     lead="いくつでも選べます。お見積もりは無料です。", note="内容は仮です。お店の扱う工事に合わせて直します。", tabs=[dict(label="工事", items=items)])
+                if mode == "consult" else
+                dict(mode="visit", step="ご用件", title="来店の目的を選ぶ", next="来店の希望日を選ぶ", barLabel="来店の目的", single=True,
+                     lead="あてはまる物を1つ選んでください。", note="内容は仮です。お店のご案内に合わせて直します。", tabs=[dict(label="目的", items=items)]))
+    js = json.dumps(page, ensure_ascii=False).replace("</", "<\\/")
     from urllib.parse import quote
     fill = {
         "COLOR": color, "SHOP": shop, "TEL": html.escape(tel or "（電話番号）"), "TEL_RAW": tel_raw,
         "TEL_LABEL": "無料電話" if tel_raw.startswith(("0120", "0800")) else "電話する",
         "STAR_LINE": star_line, "AREA": html.escape(area), "AREA_EX": html.escape(city), "HOURS": html.escape(hours),
-        "TAB_HINT": "エアコンと水回りは、上のボタンで切りかえられます。" if len(menu) > 1 else "",
-        "PRICE_NOTE": note, "MENU_JSON": js, "SLUG": slug,
+        "PAGE_JSON": js, "SLUG": slug,
         "STOP_SUBJECT": quote(f"不要（合言葉 {slug}）"),
         "STOP_BODY": quote(f"今後のご案内は不要です。\n返事：不要\n合言葉：{slug}\n（このまま送ってください）"),
         "SCRIPTS": (f'<script src="../../beacon.js" data-shop="{slug}" data-page="yoyaku"></script>\n'
@@ -466,6 +496,7 @@ def main():
     ap.add_argument("--remove", help="消す店の番号（カンマ区切り）")
     ap.add_argument("--yoyaku", action="store_true", help="SMS 用：booking.html の代わりに yoyaku.html（参考サイトの4段の形）を作る。メール下書き・手紙は作らない")
     ap.add_argument("--color", default="#13294b", help="--yoyaku のテーマ色（候補シートに「テーマ色」列があればそちらが先）")
+    ap.add_argument("--mode", choices=["menu", "consult", "visit"], help="--yoyaku の1段目を業種によらず固定する（省くと業種から決める）")
     ap.add_argument("--only", help="作る店の番号（カンマ区切り）。省くと条件に合う全部の店")
     a = ap.parse_args()
 
@@ -514,7 +545,7 @@ def main():
             os.makedirs(d, exist_ok=True)
             color = row.get("テーマ色", "").strip()
             color = color if re.fullmatch(r"#[0-9a-fA-F]{6}", color) else a.color
-            open(os.path.join(d, "yoyaku.html"), "w", encoding="utf-8").write(make_yoyaku(row, prices, slug, color))
+            open(os.path.join(d, "yoyaku.html"), "w", encoding="utf-8").write(make_yoyaku(row, prices, slug, color, a.mode))
             open(os.path.join(d, "report.html"), "w", encoding="utf-8").write(
                 make_report(row, menu_for(row, shop_prices(prices, no)), slug, is_aircon_only(row)))
             m["予約フォームのURL"] = BASE_URL + slug + "/yoyaku.html"

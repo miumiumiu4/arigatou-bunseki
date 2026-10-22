@@ -55,6 +55,9 @@
   .qty button{width:36px;height:36px;border-radius:50%;border:1.5px solid var(--c);background:#fff;color:var(--c);font-size:20px;line-height:1;cursor:pointer;font-family:inherit;padding:0}
   .qty button.plus{background:var(--c);color:#fff}
   .qty button:disabled{opacity:.3;cursor:default}
+  .pick{flex:none;border:1.5px solid var(--c);background:#fff;color:var(--c);border-radius:999px;padding:7px 14px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit}
+  .pick.on{background:var(--c);color:#fff}
+  .free{display:inline-block;background:var(--accent);color:#3b2600;font-weight:700;font-size:13px;border-radius:6px;padding:2px 8px;margin-top:10px}
   .qty output{width:28px;text-align:center;font-weight:700;font-size:16px}
   .note{font-size:12.5px;color:var(--muted);background:var(--soft);border-radius:8px;padding:8px 10px;margin:10px 0 0}
   .panel label{display:block;font-weight:700;font-size:14px;margin-top:14px}
@@ -115,15 +118,16 @@
     </div>
   </section>
 
-  <ol class="steps" id="steps"><li class="on">メニュー</li><li>希望日</li><li>お客さま</li><li>確認</li></ol>
+  <ol class="steps" id="steps"><li class="on" id="s1label">メニュー</li><li>希望日</li><li>お客さま</li><li>確認</li></ol>
 
   <!-- 1 メニュー -->
   <section class="panel on" data-step="0">
-    <h2>メニューを選ぶ</h2>
-    <p class="lead">＋を押すと料金がその場で変わります。エアコンと水回りは、上のボタンで切りかえられます。</p>
+    <h2 id="s1title">メニューを選ぶ</h2>
+    <p class="lead" id="s1lead"></p>
     <div class="tabs" id="tabs"></div>
     <div id="items"></div>
-    <p class="note">料金はすべて仮です。エアコンクリーニングイチロー様の料金表に合わせて直します。</p>
+    <div id="extra"></div>
+    <p class="note" id="s1note"></p>
   </section>
 
   <!-- 2 希望日 -->
@@ -169,7 +173,7 @@
 </main>
 
 <div class="bar" id="bar"><div class="w">
-  <div class="s"><small>合計（税込）</small><b id="total">¥0</b><em id="est"></em></div>
+  <div class="s"><small id="barlabel">合計（税込）</small><b id="total">¥0</b><em id="est"></em></div>
   <button type="button" class="btn" id="next0" data-go="1" disabled>希望日を選ぶ</button>
 </div></div>
 
@@ -188,12 +192,25 @@
 
 <script>
 (function(){
-const MENU=[{"label": "エアコン", "items": [{"name": "壁掛けエアコン", "price": 12000, "kind": "定額", "sub": "1台・仮の料金"}, {"name": "お掃除機能付きエアコン", "price": 22000, "kind": "定額", "sub": "1台・仮の料金"}, {"name": "室外機", "price": 5000, "kind": "定額", "sub": "1台・仮の料金"}]}, {"label": "水回り", "items": [{"name": "浴室", "price": 15000, "kind": "定額", "sub": "1か所・仮の料金"}, {"name": "キッチン", "price": 16000, "kind": "定額", "sub": "1か所・仮の料金"}, {"name": "レンジフード（換気扇）", "price": 16000, "kind": "定額", "sub": "1台・仮の料金"}, {"name": "洗面所", "price": 8000, "kind": "定額", "sub": "1か所・仮の料金"}, {"name": "トイレ", "price": 7000, "kind": "定額", "sub": "1か所・仮の料金"}]}];
+// 1段目は PAGE で切り替える。mode：menu＝メニュー＋数量＋合計（ハウスクリーニング）／consult＝相談したい工事を選ぶ＋予算・見積もり無料（リフォーム・工務店・建築）／visit＝来店の目的を選ぶ（不動産）
+const PAGE={"mode": "menu", "step": "メニュー", "title": "メニューを選ぶ", "next": "希望日を選ぶ", "tabs": [{"label": "エアコン", "items": [{"name": "壁掛けエアコン", "price": 12000, "kind": "定額", "sub": "1台・仮の料金"}, {"name": "お掃除機能付きエアコン", "price": 22000, "kind": "定額", "sub": "1台・仮の料金"}, {"name": "室外機", "price": 5000, "kind": "定額", "sub": "1台・仮の料金"}]}, {"label": "水回り", "items": [{"name": "浴室", "price": 15000, "kind": "定額", "sub": "1か所・仮の料金"}, {"name": "キッチン", "price": 16000, "kind": "定額", "sub": "1か所・仮の料金"}, {"name": "レンジフード（換気扇）", "price": 16000, "kind": "定額", "sub": "1台・仮の料金"}, {"name": "洗面所", "price": 8000, "kind": "定額", "sub": "1か所・仮の料金"}, {"name": "トイレ", "price": 7000, "kind": "定額", "sub": "1か所・仮の料金"}]}], "lead": "＋を押すと料金がその場で変わります。エアコンと水回りは、上のボタンで切りかえられます。", "note": "料金はすべて仮です。エアコンクリーニングイチロー様の料金表に合わせて直します。"};
+const MODE=PAGE.mode||'menu', MENU=PAGE.tabs;
 const SLUG="4aqj4zbu", NOLOG=/[?&]nolog/.test(location.search);
 const yen=n=>'¥'+n.toLocaleString('ja-JP');
 const q=s=>document.querySelector(s), qa=s=>[...document.querySelectorAll(s)];
 let tab=0, step=0;
 MENU.forEach(t=>t.items.forEach(i=>i.n=0));
+q('#s1label').textContent=PAGE.step||'メニュー';
+q('#s1title').textContent=PAGE.title||'メニューを選ぶ';
+q('#s1lead').textContent=PAGE.lead||'';
+q('#s1note').textContent=PAGE.note||'';q('#s1note').style.display=PAGE.note?'':'none';
+q('#next0').textContent=PAGE.next||'希望日を選ぶ';
+q('#barlabel').textContent=MODE==='menu'?'合計（税込）':MODE==='consult'?'見積もり無料':(PAGE.barLabel||'来店の目的');
+if(MODE==='consult'){
+  const x=q('#extra');
+  x.innerHTML='<label for="budget">ご予算<span class="opt">任意</span></label><select id="budget"><option value="">選んでください</option></select><span class="free">見積もり無料</span>';
+  (PAGE.budgets||[]).forEach(b=>{const o=document.createElement('option');o.textContent=b;x.querySelector('select').append(o)});
+}
 
 function priceText(i){
   if(i.kind==='要見積')return '要見積';
@@ -214,6 +231,14 @@ function drawItems(){
   const box=q('#items');box.innerHTML='';
   MENU[tab].items.forEach(i=>{
     const d=document.createElement('div');d.className='item';
+    if(MODE!=='menu'){
+      d.innerHTML='<div class="t"><b></b><small></small></div><button type="button" class="pick"></button>';
+      d.querySelector('b').textContent=i.name;
+      const sm=d.querySelector('small');if(i.sub)sm.textContent=i.sub;else sm.remove();
+      const b=d.querySelector('.pick'),sync=()=>{b.textContent=i.n?'✓ 選択中':'選ぶ';b.classList.toggle('on',!!i.n)};
+      b.onclick=()=>{if(PAGE.single&&!i.n)MENU.forEach(t=>t.items.forEach(j=>j.n=0));i.n=i.n?0:1;draw()};
+      sync();box.append(d);return;
+    }
     d.innerHTML='<div class="t"><b></b><span class="p"></span><small></small></div><div class="qty"><button type="button" class="minus" aria-label="減らす">−</button><output>0</output><button type="button" class="plus" aria-label="増やす">＋</button></div>';
     d.querySelector('b').textContent=i.name;
     d.querySelector('.p').textContent=priceText(i)+(i.kind==='要見積'?'':'（税込）');
@@ -228,6 +253,7 @@ function drawItems(){
 function chosen(){return MENU.flatMap(t=>t.items.filter(i=>i.n>0))}
 function calc(){
   const c=chosen();
+  if(MODE!=='menu'){q('#total').textContent=c.length?c.length+'件 選択中':'未選択';q('#est').textContent='';q('#next0').disabled=!c.length;return {s:0,from:false,est:false}}
   const s=c.filter(i=>i.kind!=='要見積').reduce((a,i)=>a+i.price*i.n,0);
   const from=c.some(i=>i.kind==='〜から'), est=c.some(i=>i.kind==='要見積');
   q('#total').textContent=yen(s)+(from?'〜':'');
@@ -252,13 +278,14 @@ function check(to){
 }
 function summary(){
   const c=chosen(),t=calc();
-  const rows=[
-    ['メニュー',c.map(i=>i.name+' ×'+i.n+'（'+priceText(i)+'）').join('\n')],
-    ['合計（税込）',yen(t.s)+(t.from?'〜':'')+(t.est?' ＋お見積りの分':'')],
+  const head=MODE==='menu'?[['メニュー',c.map(i=>i.name+' ×'+i.n+'（'+priceText(i)+'）').join('\n')],
+    ['合計（税込）',yen(t.s)+(t.from?'〜':'')+(t.est?' ＋お見積りの分':'')]]
+    :[[PAGE.step||'ご用件',c.map(i=>i.name).join('\n')]].concat(MODE==='consult'?[['ご予算',(q('#budget')&&q('#budget').value)||'未定'],['お見積り','無料']]:[]);
+  const rows=head.concat([
     ['第1希望',val('d1')+' '+val('t1')],
     ['第2希望',val('d2')?val('d2')+' '+val('t2'):'なし'],
     ['お名前',val('nm')],['電話番号',val('ph')],['ご住所',val('ad')],
-    ['メール',val('ml')||'なし'],['ご要望',val('rq')||'なし']];
+    ['メール',val('ml')||'なし'],['ご要望',val('rq')||'なし']]);
   const tb=q('#sum');tb.innerHTML='';
   rows.forEach(r=>{const tr=tb.insertRow(),th=document.createElement('th'),td=tr.insertCell();th.textContent=r[0];tr.prepend(th);td.textContent=r[1];td.style.whiteSpace='pre-line'});
 }
@@ -283,7 +310,7 @@ q('#send').addEventListener('click',()=>{
   if(!window.ARIGATOU_GAS){done('見本のため送信されません。本物のページでは、ここでお店に予約が届きます。');return}
   const c=chosen(),t=calc();
   const body=new URLSearchParams({kind:'mita',s:SLUG,page:'yoyaku',in:'見本から送信テスト',n:'',
-    q:(c.map(i=>i.name+'×'+i.n).join('、')+' '+yen(t.s)).slice(0,80),c:(val('ml')||val('ph')).slice(0,80)});
+    q:(c.map(i=>i.name+(MODE==='menu'?'×'+i.n:'')).join('、')+(MODE==='menu'?' '+yen(t.s):'')).slice(0,80),c:(val('ml')||val('ph')).slice(0,80)});
   b.disabled=true;err.textContent='';
   fetch(window.ARIGATOU_GAS,{method:'POST',mode:'no-cors',body}).then(()=>{
     done('送りました（見本からの送信テストです。お客さまには届きません）。本物のページでは、ここでお店に予約が届き、お店からお客さまへ確認のご連絡をします。');
