@@ -5,6 +5,8 @@
   python3 tools/make_samples.py --candidates 候補.csv [--prices 価格.csv]
       --manifest 一覧.csv --drafts 下書き.csv [--senders a@x,b@x,...] [--per-day 30]
   python3 tools/make_samples.py --manifest 一覧.csv --remove 12   # 「不要」の店のページを消す
+  python3 tools/make_samples.py --yoyaku --candidates 候補.csv [--prices 価格.csv] --manifest 一覧.csv
+      # SMS 用：booking.html の代わりに参考サイトの形の yoyaku.html（4段の予約ページ）を作る
 
 決まり：
   - 使うのは店名・★・口コミ件数・業種・地域・公表しているサービスと料金だけ。口コミの文章と写真は使わない。
@@ -265,6 +267,110 @@ Googleマップで{shop}様を拝見しました{google}。
     return subject, body
 
 
+# ---- SMS 用の予約ページ（参考サイトの4段の形。housecleaning/yoyaku_template.html） ----
+PRICE_KIND = "価格の種類（定額・〜から・範囲の下限・範囲の上限・要見積）"
+SAMPLE_MENU = [  # 価格シートに行がない店の仮の料金（ページに「仮」と出す）
+    ("エアコン", "サービス：エアコン", "壁掛けエアコン", 12000, "1台"),
+    ("エアコン", "サービス：エアコン", "お掃除機能付きエアコン", 22000, "1台"),
+    ("エアコン", "サービス：エアコン", "室外機", 5000, "1台"),
+    ("水回り", "サービス：浴室", "浴室", 15000, "1か所"),
+    ("水回り", "サービス：キッチン", "キッチン", 16000, "1か所"),
+    ("水回り", "サービス：レンジフード", "レンジフード（換気扇）", 16000, "1台"),
+    ("水回り", "サービス：洗面台", "洗面所", 8000, "1か所"),
+    ("水回り", "サービス：トイレ", "トイレ", 7000, "1か所"),
+]
+MOBILE_COL = "携帯番号（070・080・090 で始まる物だけ）"
+
+
+def yoyaku_menu(row, prices, no):
+    """価格シートの行 → タブごとのメニュー。店の表記（〜から・要見積）はそのまま。税抜は税込に直して添える。"""
+    tabs, real = {}, 0
+    for p in prices:
+        if p.get("店番号（候補シートの番号）", "").strip() != no:
+            continue
+        kind = p.get(PRICE_KIND, "").strip() or "定額"
+        if kind == "範囲の上限":
+            continue
+        kind = "〜から" if kind == "範囲の下限" else kind
+        cat = p.get("メニュー区分（下の決まりの言葉から選ぶ）", "").strip()
+        name = p.get("メニュー名（店の表記どおり・短く）", "").strip() or cat
+        val = re.sub(r"\D", "", p.get("価格（円・数字のみ）", ""))
+        if not name or (not val and kind != "要見積"):
+            continue
+        tax = p.get("税区分（税込・税抜・不明）", "").strip()
+        price = int(val) if val else 0
+        sub = [x for x in (p.get("数量・単位（例 1台・1箇所・1式・1時間）", "").strip(),
+                           p.get("セット・割引の条件（一言）", "").strip()) if x]
+        if kind == "要見積":
+            price = 0
+        elif tax == "税抜":
+            sub.append(f"税抜{price:,}円")
+            price = int(round(price * 1.1))
+        elif tax != "税込":
+            sub.append("税の扱いはお店に確認中")
+        tab = "エアコン" if re.search("エアコン|室外機", cat + name) else "水回り"
+        tabs.setdefault(tab, []).append(dict(name=name, price=price, kind=kind, sub="・".join(sub)))
+        real += 1
+    if not real:
+        has = [m for m in SAMPLE_MENU if yes(row, m[1])] or SAMPLE_MENU
+        for tab, _, name, price, unit in has:
+            tabs.setdefault(tab, []).append(dict(name=name, price=price, kind="定額", sub=f"{unit}・仮の料金"))
+    order = sorted(tabs, key=lambda t: t != "エアコン")
+    return [dict(label=t, items=tabs[t]) for t in order], real
+
+
+def display_name(raw):
+    """Googleの店名の後ろに付いた「（写真の店長が伺います）」のような添え書きは外す。"""
+    s = re.sub(r"\s*[（(][^（）()]*[）)]\s*$", "", raw).strip()
+    return s or raw
+
+
+def make_yoyaku(row, prices, slug, color):
+    s = open(os.path.join(DEMO, "yoyaku_template.html"), encoding="utf-8").read()
+    no = row.get("番号", "").strip()
+    shop = html.escape(display_name(row["店名"].strip()))
+    tel = (row.get("電話", "") or row.get(MOBILE_COL, "")).strip()
+    tel_raw = re.sub(r"[^0-9+]", "", tel.translate(str.maketrans("０１２３４５６７８９", "0123456789")))
+    star, cnt, seen = row.get("Googleの★", "").strip(), row.get("口コミ件数", "").strip(), row.get("確認した日", "").strip()
+    ym = f"{seen[:4]}年{int(seen[5:7])}月時点" if re.match(r"\d{4}-\d{2}", seen) else "2026年10月時点"
+    try:
+        star_txt = f"{float(star):.1f}"
+    except ValueError:
+        star_txt = star
+    star_line = (f'<p class="star">Googleの口コミ <b>★{html.escape(star_txt)}</b>（{html.escape(cnt)}件・{ym}）</p>'
+                 if star and cnt else "")
+    city = row.get("住所（市区町村まで）", "").strip() or row.get("都道府県", "").strip()
+    area = row.get("対応エリア（区名などを「、」でつなぐ）", "").strip() or (f"{city}とその周辺（お店に合わせて直します）" if city else "（お店の対応エリアを入れます）")
+    hours = row.get("営業日時の特徴（年中無休・平日のみ・土日可・不明）", "").strip()
+    hours = hours if hours and hours != "不明" else "（お店の営業日時を入れます）"
+    menu, real = yoyaku_menu(row, prices, no)
+    note = ("料金は" + shop + "様が公表している料金です（税込）。「〜」はその金額から、「要見積」はお見積りになります。" if real else
+            "料金はすべて仮です。" + shop + "様の料金表に合わせて直します。")
+    js = json.dumps(menu, ensure_ascii=False).replace("</", "<\\/")
+    from urllib.parse import quote
+    fill = {
+        "COLOR": color, "SHOP": shop, "TEL": html.escape(tel or "（電話番号）"), "TEL_RAW": tel_raw,
+        "TEL_LABEL": "無料電話" if tel_raw.startswith(("0120", "0800")) else "電話する",
+        "STAR_LINE": star_line, "AREA": html.escape(area), "AREA_EX": html.escape(city), "HOURS": html.escape(hours),
+        "TAB_HINT": "エアコンと水回りは、上のボタンで切りかえられます。" if len(menu) > 1 else "",
+        "PRICE_NOTE": note, "MENU_JSON": js, "SLUG": slug,
+        "STOP_SUBJECT": quote(f"不要（合言葉 {slug}）"),
+        "STOP_BODY": quote(f"今後のご案内は不要です。\n返事：不要\n合言葉：{slug}\n（このまま送ってください）"),
+        "SCRIPTS": (f'<script src="../../beacon.js" data-shop="{slug}" data-page="yoyaku"></script>\n'
+                    f'<script src="../../mita.js" data-shop="{slug}" data-page="yoyaku"></script>'),
+    }
+    for k, v in fill.items():
+        s = s.replace("{{" + k + "}}", v)
+    left = re.findall(r"\{\{[A-Z_0-9]+\}\}", s)
+    if left:
+        raise SystemExit(f"差し込み残り：{left}")
+    return s
+
+
+def has_phone(row):
+    return bool(re.sub(r"\D", "", row.get(MOBILE_COL, "") or row.get("電話", "")))
+
+
 ADDR_COL = "郵送用の住所（〒から番地まで・店が公表している物だけ）"
 LANDING = "miumiumiu4.github.io/arigatou-bunseki/housecleaning/"
 # 日本郵便 Webレター「差込データ」の1〜14列目（宛先）。差込データファイル作成ルールの項目名。
@@ -358,6 +464,9 @@ def main():
     ap.add_argument("--letters-only", action="store_true", help="メールは使わず、全部の店を手紙で送る（2026-10-20 三浦さん「ひとまず手紙作戦オンリー」）")
     ap.add_argument("--start", default=str(datetime.date.today()))
     ap.add_argument("--remove", help="消す店の番号（カンマ区切り）")
+    ap.add_argument("--yoyaku", action="store_true", help="SMS 用：booking.html の代わりに yoyaku.html（参考サイトの4段の形）を作る。メール下書き・手紙は作らない")
+    ap.add_argument("--color", default="#13294b", help="--yoyaku のテーマ色（候補シートに「テーマ色」列があればそちらが先）")
+    ap.add_argument("--only", help="作る店の番号（カンマ区切り）。省くと条件に合う全部の店")
     a = ap.parse_args()
 
     manifest = load(a.manifest) if os.path.exists(a.manifest) else []
@@ -384,6 +493,10 @@ def main():
                "営業お断り" if row.get("営業お断り（なし・あり）", "").strip() == "あり" else
                "チェーン" if row.get("チェーンか（いいえ・はい）", "").strip() == "はい" else
                "きらりん・エアタクミ" if any(x in name for x in EXCLUDE_NAMES) else
+               "番号の指定外" if a.only and no not in [x.strip() for x in a.only.split(",")] else
+               "返事が「不要」" if a.yoyaku and "不要" in (row.get("返事（興味あり・保留・不要・なし）", "") + row.get("返事", "")) else
+               "電話番号がない" if a.yoyaku and not has_phone(row) else
+               "" if a.yoyaku else
                "郵送用の住所がない（手紙だけで送る）" if a.letters_only and not split_address(row.get(ADDR_COL, "")) else
                "アドレスも郵送用の住所もない" if "@" not in row.get("店が公表しているメールアドレス", "") and not split_address(row.get(ADDR_COL, "")) else
                "以前に消した店" if by_no.get(no, {}).get("状態") == "消した" else "")
@@ -396,6 +509,19 @@ def main():
             manifest.append(m)
             by_no[no] = m
         slug = m["合言葉"]
+        if a.yoyaku:
+            d = os.path.join(OUT, slug)
+            os.makedirs(d, exist_ok=True)
+            color = row.get("テーマ色", "").strip()
+            color = color if re.fullmatch(r"#[0-9a-fA-F]{6}", color) else a.color
+            open(os.path.join(d, "yoyaku.html"), "w", encoding="utf-8").write(make_yoyaku(row, prices, slug, color))
+            open(os.path.join(d, "report.html"), "w", encoding="utf-8").write(
+                make_report(row, menu_for(row, shop_prices(prices, no)), slug, is_aircon_only(row)))
+            m["予約フォームのURL"] = BASE_URL + slug + "/yoyaku.html"
+            m["レポートのURL"] = BASE_URL + slug + "/report.html"
+            m["送り方"] = "SMS"
+            made.append(m)
+            continue
         aircon = is_aircon_only(row)
         menu = menu_for(row, shop_prices(prices, no))
         d = os.path.join(OUT, slug)
@@ -406,6 +532,11 @@ def main():
         m["レポートのURL"] = BASE_URL + slug + "/report.html"
         made.append(m)
 
+    if a.yoyaku:
+        save_manifest(a.manifest, manifest)
+        print(json.dumps({"作った": [{"番号": m["番号"], "URL": m["予約フォームのURL"], "確認用": m["予約フォームのURL"] + "?nolog"} for m in made],
+                          "外した": [{"番号": n, "店名": s, "理由": r} for n, s, r in skipped]}, ensure_ascii=False, indent=1))
+        return
     start = datetime.date.fromisoformat(a.start)
     rows = {r.get("番号", "").strip(): r for r in load(a.candidates)}
     mails = [] if a.letters_only else [m for m in made if "@" in rows[m["番号"]].get("店が公表しているメールアドレス", "")]
