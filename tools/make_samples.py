@@ -347,6 +347,20 @@ def display_name(raw):
 CONTACT_TEL = "000-0000-0000"
 CONTACT_TEL_IS_TEMP = True
 CONTACT_MAIL = "miura1@bunseki.arigatouosouji.com"
+# 両ページ下部「この見本ページについて」の会社の表示。変える時はここだけ直して作り直す。
+COMPANY_NAME = "エイムポイント合同会社"
+COMPANY_TRADE_NAME = "ありがとうエアコンお掃除専門店"  # 屋号
+COMPANY_REP = "三浦公嗣"
+COMPANY_ADDRESS = "（登記上の住所を入れる）"  # 仮置き
+
+
+def company_lines():
+    trade = f"（屋号：{html.escape(COMPANY_TRADE_NAME)}）" if COMPANY_TRADE_NAME else ""
+    return (f"作った会社：<b>{html.escape(COMPANY_NAME)}</b>{trade}<br>\n"
+            f"    代表：{html.escape(COMPANY_REP)}<br>\n"
+            f"    住所：{html.escape(COMPANY_ADDRESS)}<br>")
+
+
 # 「データはこう溜まる」の見本シート（Google スプレッドシート・仮の数字・個人情報なし）
 SHEET_URL = "https://docs.google.com/spreadsheets/d/1xQEPbSlHTzcW1Qk8cYtnBVcrsGGqtrT8bCxr3Z2tm28/edit?usp=sharing"
 # バナーに出す価格（税込）。変える時はここだけ直して作り直す。
@@ -449,6 +463,7 @@ def make_report_v2(row, slug, color):
     fill = {
         "COLOR": color, "SHOP": html.escape(plain), "SHEET_URL": html.escape(SHEET_URL),
         "BANNER_CSS": BANNER_CSS, "BANNER": contact_banner(plain, slug),
+        "COMPANY": company_lines(),
         "STOP_SUBJECT": quote(f"不要（合言葉 {slug}）"),
         "STOP_BODY": quote(f"今後のご案内は不要です。\n返事：不要\n合言葉：{slug}\n（このまま送ってください）"),
         "SCRIPTS": f'<script src="../../beacon.js" data-shop="{slug}" data-page="report"></script>',
@@ -506,6 +521,7 @@ def make_yoyaku(row, prices, slug, color, mode=None, photos=""):
         "STOP_SUBJECT": quote(f"不要（合言葉 {slug}）"),
         "STOP_BODY": quote(f"今後のご案内は不要です。\n返事：不要\n合言葉：{slug}\n（このまま送ってください）"),
         "BANNER_CSS": BANNER_CSS, "BANNER": contact_banner(display_name(row["店名"].strip()), slug, to_report=True),
+        "COMPANY": company_lines(),
         "PHOTO": photo_block(photo_urls(photos), photo_credit(row)),
         "BAND_PHOTO": "写真はお店が公開している物を参照しています" if photo_urls(photos) else "写真は仮の物です",
         "SCRIPTS": f'<script src="../../beacon.js" data-shop="{slug}" data-page="yoyaku"></script>',
